@@ -20,14 +20,18 @@
       user-select: none;
       -webkit-user-select: none;
     }
-    body {
-      background-color: #0b0914;
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
+      background-color: #07050d;
       color: #e2e8f0;
       font-family: 'DungGeunMo', 'Press Start 2P', 'Noto Sans KR', monospace;
       image-rendering: pixelated;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
     }
     /* Pixel border utilities */
     .pixel-box {
@@ -82,13 +86,13 @@
     }
     /* Toast animation */
     @keyframes toastFade {
-      0% { opacity: 0; transform: translate(-50%, -10px); }
-      15% { opacity: 1; transform: translate(-50%, 0); }
-      85% { opacity: 1; transform: translate(-50%, 0); }
-      100% { opacity: 0; transform: translate(-50%, -15px); }
+      0% { opacity: 0; transform: translate(-50%, -6px) scale(0.95); }
+      15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      80% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -8px) scale(0.95); }
     }
     .toast-anim {
-      animation: toastFade 2.2s forwards;
+      animation: toastFade 1.5s forwards;
     }
     /* Tier Colors */
     .tier-1 { color: #94a3b8; border-color: #475569; } /* 일반 */
@@ -113,10 +117,10 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex justify-center bg-[#07050d] text-slate-100">
+<body class="h-full h-[100dvh] flex justify-center bg-[#07050d] text-slate-100 overflow-hidden">
 
-  <!-- Main Container (Mobile & Desktop Adaptive Frame) -->
-  <div class="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl min-h-screen flex flex-col bg-[#110e1e] border-x-2 border-[#2b2247] shadow-2xl relative">
+  <!-- Main Container (100% Viewport Height Adaptive Frame - No Outer Scroll on Any Smartphone) -->
+  <div id="appContainer" class="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl h-full h-[100dvh] max-h-[100dvh] flex flex-col bg-[#110e1e] border-x-2 border-[#2b2247] shadow-2xl relative overflow-hidden">
 
     <!-- ========================================== -->
     <!-- 0. MAIN TITLE SCREEN (메인 시작 화면) -->
@@ -278,9 +282,9 @@
     </header>
 
     <!-- ========================================== -->
-    <!-- 2. CENTER: BATTLE CANVAS (PIXEL BATTLEFIELD) -->
+    <!-- 2. CENTER: BATTLE CANVAS (Compact Focused Battlefield) -->
     <!-- ========================================== -->
-    <main class="relative flex-1 bg-black overflow-hidden flex flex-col justify-center items-center select-none min-h-[220px] max-h-[340px] sm:max-h-[380px]">
+    <main class="relative h-[27vh] min-h-[140px] max-h-[210px] sm:h-[30vh] sm:max-h-[230px] bg-black overflow-hidden flex flex-col justify-center items-center select-none shrink-0">
       
       <!-- Canvas itself -->
       <canvas id="gameCanvas" width="480" height="270" class="w-full h-full object-contain bg-[#110e1c] cursor-crosshair"></canvas>
@@ -329,38 +333,38 @@
     </main>
 
     <!-- ========================================== -->
-    <!-- 3. BOTTOM: TABS AND SYSTEM PANELS -->
+    <!-- 3. BOTTOM: TABS AND SYSTEM PANELS (Self-contained Internal Scroll) -->
     <!-- ========================================== -->
-    <section class="flex-1 flex flex-col bg-[#141024] border-t-2 border-[#2b2247] z-10 min-h-[300px]">
+    <section class="flex-1 min-h-0 flex flex-col bg-[#141024] border-t-2 border-[#2b2247] z-10 overflow-hidden">
       
-      <!-- Tab Navigation Buttons -->
-      <nav class="grid grid-cols-5 bg-[#0e0a1a] border-b-2 border-[#2b2247] text-xs font-bold">
-        <button data-tab="stats" class="tab-btn py-2.5 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors pixel-tab-active">
-          <span class="text-base sm:text-lg">📊</span>
-          <span class="text-[11px]">스텟</span>
+      <!-- Tab Navigation Buttons (Compact & Sharp) -->
+      <nav class="grid grid-cols-5 bg-[#0e0a1a] border-b-2 border-[#2b2247] text-xs font-bold shrink-0">
+        <button data-tab="stats" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors pixel-tab-active">
+          <span class="text-sm sm:text-base">📊</span>
+          <span class="text-[10px] sm:text-[11px]">스텟</span>
         </button>
-        <button data-tab="skills" class="tab-btn py-2.5 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400">
-          <span class="text-base sm:text-lg">⚡</span>
-          <span class="text-[11px]">스킬</span>
+        <button data-tab="skills" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400">
+          <span class="text-sm sm:text-base">⚡</span>
+          <span class="text-[10px] sm:text-[11px]">스킬</span>
         </button>
-        <button data-tab="equip" class="tab-btn py-2.5 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400">
-          <span class="text-base sm:text-lg">🗡️</span>
-          <span class="text-[11px]">장비</span>
+        <button data-tab="equip" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400">
+          <span class="text-sm sm:text-base">🗡️</span>
+          <span class="text-[10px] sm:text-[11px]">장비</span>
         </button>
-        <button data-tab="gacha" class="tab-btn py-2.5 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400 relative">
-          <span class="text-base sm:text-lg">🎲</span>
-          <span class="text-[11px]">뽑기</span>
+        <button data-tab="gacha" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400 relative">
+          <span class="text-sm sm:text-base">🎲</span>
+          <span class="text-[10px] sm:text-[11px]">뽑기</span>
           <span id="gachaBadge" class="hidden absolute top-1 right-2 w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
         </button>
-        <button data-tab="quest" class="tab-btn py-2.5 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400 relative">
-          <span class="text-base sm:text-lg">🏆</span>
-          <span class="text-[11px]">업적/설정</span>
+        <button data-tab="quest" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400 relative">
+          <span class="text-sm sm:text-base">🏆</span>
+          <span class="text-[10px] sm:text-[11px]">업적/설정</span>
           <span id="questBadge" class="hidden absolute top-1 right-2 w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
         </button>
       </nav>
 
-      <!-- TAB CONTENT CONTAINER (Scrollable) -->
-      <div class="flex-1 p-3 overflow-y-auto max-h-[380px] sm:max-h-[440px]">
+      <!-- TAB CONTENT CONTAINER (Scrolls within its own dedicated area) -->
+      <div class="flex-1 min-h-0 p-2.5 sm:p-3 overflow-y-auto overscroll-contain">
 
         <!-- ===================================== -->
         <!-- TAB 1: 스텟 (STATS) -->
@@ -812,8 +816,8 @@
     </div>
   </div>
 
-  <!-- TOAST NOTIFICATION CONTAINER -->
-  <div id="toastContainer" class="fixed top-20 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center gap-1.5"></div>
+  <!-- TOAST NOTIFICATION CONTAINER (Compact Sleek Pill Badge, Never Obstructs UI) -->
+  <div id="toastContainer" class="fixed top-20 sm:top-16 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center w-max max-w-[85vw]"></div>
 
   <!-- ========================================== -->
   <!-- 4. JAVASCRIPT GAME LOGIC -->
@@ -1221,13 +1225,15 @@
     function displayToast(msg) {
       const c = document.getElementById('toastContainer');
       if (!c) return;
+      // Clear previous toast immediately so they NEVER stack up over the screen
+      c.innerHTML = '';
       const toast = document.createElement('div');
-      toast.className = 'pixel-box px-3 py-1.5 bg-[#251c3d]/95 text-yellow-300 text-xs rounded border-yellow-500 shadow-xl toast-anim flex items-center gap-1.5';
-      toast.innerHTML = `<span>✨</span><span>${msg}</span>`;
+      toast.className = 'px-2.5 py-1 bg-[#100a20]/90 backdrop-blur-md text-yellow-300 text-[10px] sm:text-[11px] font-bold rounded-full border border-yellow-500/40 shadow-lg toast-anim flex items-center gap-1.5 whitespace-nowrap pointer-events-none select-none';
+      toast.innerHTML = `<span class="text-xs">✨</span><span>${msg}</span>`;
       c.appendChild(toast);
       setTimeout(() => {
         if (toast.parentNode) toast.parentNode.removeChild(toast);
-      }, 2200);
+      }, 1500);
     }
 
     /* ============================================================
@@ -1759,7 +1765,6 @@
           damage: Math.floor(stats.atk * (2.5 + sk.level * 0.4)),
           life: 2.0,
         });
-        displayToast(`[스킬] ${sk.name} 발사!`);
 
       } else if (skillKey === 'meteor') {
         screenShake = 12;
@@ -1772,18 +1777,15 @@
           damage: Math.floor(stats.atk * (4.5 + sk.level * 0.8)),
           life: 0.8,
         });
-        displayToast(`[스킬] ${sk.name} 강림!`);
 
       } else if (skillKey === 'berserk') {
         sk.duration = 8.0;
         screenShake = 6;
-        displayToast(`[스킬] ${sk.name} 발동! (공속/치명타 극대화)`);
 
       } else if (skillKey === 'shield') {
         const shieldVal = Math.floor(stats.maxHp * (0.35 + sk.level * 0.05));
         hero.shield = shieldVal;
         hero.hp = Math.min(stats.maxHp, hero.hp + Math.floor(stats.maxHp * 0.3));
-        displayToast(`[스킬] ${sk.name} 발동! (실드 +${formatNumber(shieldVal)})`);
       }
 
       updateSkillsUI();
@@ -1908,16 +1910,17 @@
         const banner = document.getElementById('bossBanner');
         if (banner) banner.classList.add('hidden');
         screenShake = 15;
-        displayToast(`🎉 STAGE ${game.stage} 보스 토벌 성공!`);
 
-        // First clear bonus
+        // First clear bonus (combined single concise toast)
         if (game.stage === game.highestStage) {
           const firstClearGems = 100 + Math.min(5000, game.stage * 25);
           game.gems += firstClearGems;
           if (game.highestStage < MAX_GAME_STAGE) {
             game.highestStage++;
           }
-          displayToast(`💎 스테이지 최초 돌파 보상: 보석 +${firstClearGems}!`);
+          displayToast(`🎉 STAGE ${game.stage} 보스 토벌 돌파! (보석 +${firstClearGems})`);
+        } else {
+          displayToast(`🎉 STAGE ${game.stage} 보스 토벌 성공!`);
         }
 
         if (game.autoStage && game.stage < MAX_GAME_STAGE) {
@@ -2420,22 +2423,22 @@
         else if (st.key === 'atkSpeed') curValDisplay = `${effective.atkSpeed}회/초`;
 
         html += `
-          <div class="pixel-box p-2 bg-[#171329] flex items-center justify-between gap-2 border-[#2f224f]">
-            <div class="flex items-center gap-2">
-              <span class="text-base sm:text-lg">${st.icon}</span>
-              <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="font-extrabold text-slate-100">${st.name}</span>
-                  <span class="text-[10px] text-yellow-400 font-mono">Lv.${curLvl}</span>
+          <div class="pixel-box p-1.5 sm:p-2 bg-[#171329] flex items-center justify-between gap-1.5 border-[#2f224f]">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-base shrink-0">${st.icon}</span>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 truncate">
+                  <span class="font-extrabold text-slate-100 text-xs truncate">${st.name}</span>
+                  <span class="text-[10px] text-yellow-400 font-mono shrink-0">Lv.${curLvl}</span>
                 </div>
-                <div class="text-[11px] text-slate-300 font-bold">
+                <div class="text-[10px] sm:text-[11px] text-slate-300 font-bold truncate">
                   현재: <span class="text-cyan-300">${curValDisplay}</span>
                 </div>
               </div>
             </div>
-            <button class="btn-upgrade-stat pixel-btn px-3 py-1.5 rounded font-extrabold text-xs flex flex-col items-center min-w-[95px] ${canAfford ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-slate-800 text-slate-500'}"
+            <button class="btn-upgrade-stat pixel-btn px-2.5 py-1 rounded font-extrabold text-xs flex flex-col items-center min-w-[85px] sm:min-w-[95px] shrink-0 ${canAfford ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-slate-800 text-slate-500'}"
               data-stat="${st.key}" data-cost="${cost}" ${canAfford ? '' : 'disabled'}>
-              <span>+${currentBulk} 강화</span>
+              <span class="text-[11px]">+${currentBulk} 강화</span>
               <span class="text-[10px] text-amber-300 font-bold">💰 ${formatNumber(cost)}</span>
             </button>
           </div>
