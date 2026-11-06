@@ -196,6 +196,12 @@
           </span>
         </div>
         <div class="flex items-center gap-1 shrink-0">
+          <button id="btnSleepMode" class="pixel-btn bg-[#251b3d] hover:bg-[#38285c] text-[10px] sm:text-xs px-1.5 py-0.5 rounded text-amber-300 font-bold whitespace-nowrap" title="절전 모드 (번인 방지 / 배터리 절약)">
+            🌙
+          </button>
+          <button id="btnFullscreenToggle" class="pixel-btn bg-[#222738] hover:bg-[#333b52] text-[10px] sm:text-xs px-1.5 py-0.5 rounded text-slate-200 font-bold whitespace-nowrap" title="전체화면 전환 / 해제">
+            ⛶
+          </button>
           <button id="btnReturnToMain" class="pixel-btn bg-[#271d42] hover:bg-[#382a5c] text-[10px] sm:text-xs px-1.5 py-0.5 rounded text-purple-200 font-bold whitespace-nowrap">
             🏠 메인
           </button>
@@ -556,6 +562,12 @@
               <button id="btnOpenBackupModal" class="pixel-btn bg-blue-700 hover:bg-blue-600 text-white font-bold py-1.5 px-2 rounded">
                 📤 백업 / 복원 열기
               </button>
+              <button id="btnSettingsSleep" class="pixel-btn bg-amber-800 hover:bg-amber-700 text-amber-100 font-bold py-1.5 px-2 rounded">
+                🌙 절전 모드 실행
+              </button>
+              <button id="btnSettingsFullscreen" class="pixel-btn bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold py-1.5 px-2 rounded">
+                ⛶ 전체화면 전환
+              </button>
               <button id="btnPromptReset" class="pixel-btn bg-rose-800 hover:bg-rose-700 text-white font-bold py-1.5 px-2 rounded col-span-2">
                 ⚠️ 데이터 초기화 (처음부터)
               </button>
@@ -689,6 +701,47 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- 7. SLEEP MODE OVERLAY (AMOLED BURN-IN PREVENTION & POWER SAVING) -->
+  <div id="sleepModeOverlay" class="hidden fixed inset-0 z-50 bg-[#040308] text-slate-400 select-none flex flex-col justify-between items-center p-6 text-center">
+    
+    <!-- Top Dim Status -->
+    <div class="flex justify-between items-center w-full max-w-sm text-[11px] text-slate-500 font-mono">
+      <span>🌙 절전 모드 (자동 사냥 중)</span>
+      <span id="sleepClock">23:00:00</span>
+    </div>
+
+    <!-- Center Dim Stats -->
+    <div class="flex flex-col items-center gap-3 my-auto">
+      <div class="text-3xl opacity-40 animate-pulse">⚔️💤</div>
+      <div class="text-xs text-slate-400 font-bold" id="sleepStageInfo">
+        STAGE 1 (슬라임 초원) 사냥 중
+      </div>
+      <div class="w-full max-w-xs bg-[#090710] p-3 rounded border border-slate-800/80 text-[11px] text-left space-y-1">
+        <div class="flex justify-between">
+          <span class="text-slate-500">💰 획득한 골드</span>
+          <span id="sleepGoldGained" class="text-amber-400/80 font-mono">+0</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">💎 획득한 보석</span>
+          <span id="sleepGemsGained" class="text-cyan-400/80 font-mono">+0</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">🛡️ 용사 체력</span>
+          <span id="sleepHeroHp" class="text-emerald-500/80 font-mono">100/100</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Wake Up Prompt -->
+    <div class="flex flex-col items-center gap-2 w-full max-w-xs">
+      <button id="btnWakeUp" class="pixel-btn w-full bg-[#181329] hover:bg-[#281f44] text-yellow-400 font-bold text-xs sm:text-sm py-2.5 rounded border border-yellow-500/40 shadow-lg">
+        🔓 터치하여 절전 모드 해제
+      </button>
+      <span class="text-[10px] text-slate-600">배터리 절약을 위해 화면 렌더링이 최소화됩니다.</span>
+    </div>
+
   </div>
 
   <!-- 6. STAGE SELECT ALL LIST MODAL (1 ~ 1000 STAGES) -->
@@ -1869,9 +1922,14 @@
     }
 
     /* ============================================================
-     * MAIN GAME LOOP (Update & Render - Paused on Main Screen)
+     * MAIN GAME LOOP (Update & Render - Paused on Main Screen, Throttled in Sleep Mode)
      * ============================================================ */
     let lastTimestamp = performance.now();
+    let isSleepMode = false;
+    let sleepStartGold = 0;
+    let sleepStartGems = 0;
+    let sleepClockInterval = null;
+    let sleepRenderThrottle = 0;
 
     function gameLoop(timestamp) {
       const rawDt = (timestamp - lastTimestamp) / 1000;
@@ -1882,7 +1940,16 @@
       if (!isTitleScreen) {
         update(dt);
       }
-      render();
+
+      // If in sleep mode, throttle rendering to 15 FPS to save battery & prevent burn-in
+      if (isSleepMode) {
+        sleepRenderThrottle++;
+        if (sleepRenderThrottle % 4 === 0) {
+          render();
+        }
+      } else {
+        render();
+      }
 
       requestAnimationFrame(gameLoop);
     }
@@ -3404,6 +3471,114 @@
       // Keep canvas resolution fixed at 480x270 for retro pixel crispness
     }
     window.addEventListener('resize', handleResize);
+
+    // ============================================================
+    // SLEEP MODE & FULLSCREEN API HANDLERS
+    // ============================================================
+    function enterSleepMode() {
+      if (isTitleScreen) {
+        displayToast('게임을 시작한 후에 절전 모드를 사용할 수 있습니다.');
+        return;
+      }
+      isSleepMode = true;
+      sleepStartGold = game.gold;
+      sleepStartGems = game.gems;
+      document.getElementById('sleepModeOverlay').classList.remove('hidden');
+
+      updateSleepInfo();
+      if (sleepClockInterval) clearInterval(sleepClockInterval);
+      sleepClockInterval = setInterval(updateSleepInfo, 1000);
+
+      displayToast('🌙 절전 모드가 활성화되었습니다. (배터리 절약 모드)');
+    }
+
+    function exitSleepMode() {
+      if (!isSleepMode) return;
+      isSleepMode = false;
+      document.getElementById('sleepModeOverlay').classList.add('hidden');
+      if (sleepClockInterval) {
+        clearInterval(sleepClockInterval);
+        sleepClockInterval = null;
+      }
+      displayToast('☀️ 절전 모드가 해제되었습니다.');
+    }
+
+    function updateSleepInfo() {
+      if (!isSleepMode) return;
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      const clockEl = document.getElementById('sleepClock');
+      if (clockEl) clockEl.textContent = timeStr;
+
+      const stgInfo = getStageInfo(game.stage);
+      const stageEl = document.getElementById('sleepStageInfo');
+      if (stageEl) stageEl.textContent = `STAGE ${game.stage} (${stgInfo.regionName}) 사냥 중`;
+
+      const goldGain = Math.max(0, game.gold - sleepStartGold);
+      const gemsGain = Math.max(0, game.gems - sleepStartGems);
+      const goldEl = document.getElementById('sleepGoldGained');
+      const gemsEl = document.getElementById('sleepGemsGained');
+      const hpEl = document.getElementById('sleepHeroHp');
+
+      if (goldEl) goldEl.textContent = `+${formatNumber(goldGain)}`;
+      if (gemsEl) gemsEl.textContent = `+${formatNumber(gemsGain)}`;
+      if (hpEl) hpEl.textContent = `${Math.floor(hero.hp)}/${hero.maxHp}`;
+    }
+
+    document.getElementById('btnSleepMode').addEventListener('click', enterSleepMode);
+    const btnSetSleep = document.getElementById('btnSettingsSleep');
+    if (btnSetSleep) btnSetSleep.addEventListener('click', enterSleepMode);
+
+    document.getElementById('btnWakeUp').addEventListener('click', (e) => {
+      e.stopPropagation();
+      exitSleepMode();
+    });
+
+    // Fullscreen Toggle Logic
+    function toggleFullscreen() {
+      try {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          const docEl = document.documentElement;
+          if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(() => {
+              displayToast('전체화면 전환은 브라우저 권한이 필요합니다.');
+            });
+          } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+      } catch (e) {
+        displayToast('현재 환경에서 전체화면을 지원하지 않습니다.');
+      }
+    }
+
+    function updateFullscreenIcons() {
+      const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      const icon = isFs ? '🗗' : '⛶';
+      const label = isFs ? '전체화면 해제' : '전체화면';
+      const btn = document.getElementById('btnFullscreenToggle');
+      if (btn) {
+        btn.textContent = icon;
+        btn.title = label;
+      }
+      const btnSet = document.getElementById('btnSettingsFullscreen');
+      if (btnSet) {
+        btnSet.textContent = `${icon} ${label}`;
+      }
+    }
+
+    document.getElementById('btnFullscreenToggle').addEventListener('click', toggleFullscreen);
+    const btnSetFs = document.getElementById('btnSettingsFullscreen');
+    if (btnSetFs) btnSetFs.addEventListener('click', toggleFullscreen);
+
+    document.addEventListener('fullscreenchange', updateFullscreenIcons);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenIcons);
 
     // Start Game
     window.onload = () => {
