@@ -436,27 +436,7 @@
             <!-- Dynamically populated items -->
           </div>
 
-          <!-- Selected Item Detail Modal/Panel -->
-          <div id="itemDetailPanel" class="hidden pixel-box p-2.5 bg-[#1c1633] flex flex-col gap-2 text-xs">
-            <div class="flex justify-between items-start">
-              <div>
-                <div id="detailItemName" class="font-bold text-sm text-yellow-400">[일반] 녹슨 철검</div>
-                <div id="detailItemTier" class="text-[10px] text-slate-400">일반 티어 무기</div>
-              </div>
-              <button id="btnCloseDetail" class="text-slate-400 hover:text-white font-bold px-1.5">✕</button>
-            </div>
-            <div id="detailItemStats" class="text-xs text-slate-200">
-              공격력 +10 (강화 Lv.0)
-            </div>
-            <div class="flex items-center justify-end gap-2 pt-1">
-              <button id="btnUpgradeItem" class="pixel-btn bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-1 rounded">
-                강화 (💰 500)
-              </button>
-              <button id="btnEquipItem" class="pixel-btn bg-yellow-600 hover:bg-yellow-500 text-black font-extrabold text-xs px-3 py-1 rounded">
-                장착하기
-              </button>
-            </div>
-          </div>
+<!-- Item Detail Modal now opens centered in modal layer -->
 
         </div>
 
@@ -601,6 +581,55 @@
   <!-- IN-PAGE MODALS (Replaces alert/prompt/confirm) -->
   <!-- ========================================== -->
   
+  <!-- 0. ITEM DETAIL & UPGRADE MODAL (Centered Pop-up) -->
+  <div id="itemDetailModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 select-none">
+    <div id="itemDetailCard" class="pixel-box w-full max-w-xs sm:max-w-sm bg-[#1b1533] p-4 flex flex-col gap-3 border-2 border-yellow-500 shadow-2xl relative">
+      <div class="flex justify-between items-start border-b border-[#362758] pb-2">
+        <div class="flex items-center gap-2.5">
+          <span id="detailItemIcon" class="text-2xl sm:text-3xl p-1.5 bg-[#120d24] rounded-lg border border-[#3b2b5c]">🗡️</span>
+          <div>
+            <div id="detailItemName" class="font-extrabold text-sm sm:text-base text-yellow-300">[고급] 기사의 검</div>
+            <div id="detailItemTier" class="text-[10px] text-slate-400 mt-0.5">고급 등급 무기 (보유: 1개)</div>
+          </div>
+        </div>
+        <button id="btnCloseDetailModal" class="text-slate-400 hover:text-white font-bold text-base px-1.5 py-0.5">✕</button>
+      </div>
+
+      <!-- Compact Current Currency Display Bar inside Modal -->
+      <div class="flex items-center justify-between bg-[#120b22] px-2.5 py-1.5 rounded border border-[#2d1e4a] text-[11px]">
+        <div class="flex items-center gap-1 font-bold text-amber-300">
+          <span>💰 보유 골드:</span>
+          <span id="detailModalGold" class="font-mono text-amber-200">0</span>
+        </div>
+        <div class="flex items-center gap-1 font-bold text-cyan-300">
+          <span>💎 보유 보석:</span>
+          <span id="detailModalGems" class="font-mono text-cyan-200">0</span>
+        </div>
+      </div>
+
+      <div class="bg-[#100a20] p-3 rounded border border-[#2d2047] flex flex-col gap-2 text-xs">
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400 font-bold">현재 효과</span>
+          <span id="detailItemStats" class="font-bold text-cyan-300">공격력 +54</span>
+        </div>
+        <div id="detailNextLevelRow" class="flex justify-between items-center pt-1.5 border-t border-[#251b3d]">
+          <span class="text-yellow-400 font-bold flex items-center gap-1">⬆️ 강화 시 효과</span>
+          <span id="detailNextItemStats" class="font-bold text-emerald-400">공격력 +62 (+8)</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 pt-1 text-xs">
+        <button id="btnUpgradeItem" class="pixel-btn bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold py-2 rounded flex flex-col items-center">
+          <span id="txtUpgradeBtnLabel">강화하기</span>
+          <span id="txtUpgradeBtnCost" class="text-[10px] text-amber-300 font-mono font-bold">💰 500</span>
+        </button>
+        <button id="btnEquipItem" class="pixel-btn bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold py-2 rounded flex items-center justify-center">
+          장착하기
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 1. GACHA RESULT REVEAL MODAL -->
   <div id="gachaModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="pixel-box w-full max-w-sm sm:max-w-md bg-[#18122b] p-4 flex flex-col gap-3 border-yellow-500 shadow-2xl relative">
@@ -1271,10 +1300,15 @@
         baseCritRate += Math.min(25, (2 * rTier.multiplier));
       }
 
-      // Berserk active buff
+      // Berserk active buff (Scales dynamically with skill level!)
       if (game.skills.berserk.duration > 0) {
-        baseAtkSpeed *= 1.6;
-        baseCritRate += 30;
+        const bLvl = Math.max(1, game.skills.berserk.level);
+        const spdBonus = 0.50 + bLvl * 0.10; // Lv.1 = +60%, Lv.6 = +110%
+        const critBonus = 25 + bLvl * 5;    // Lv.1 = +30%, Lv.6 = +55%
+        const atkBonus = 1 + (0.10 + bLvl * 0.05); // Lv.1 = +15%, Lv.6 = +40%
+        baseAtkSpeed *= (1 + spdBonus);
+        baseCritRate += critBonus;
+        baseAtk *= atkBonus;
       }
 
       baseCritRate = Math.min(85, baseCritRate); // Hard cap 85%
@@ -1779,13 +1813,16 @@
         });
 
       } else if (skillKey === 'berserk') {
-        sk.duration = 8.0;
+        const bLvl = Math.max(1, sk.level);
+        sk.duration = 8.0 + Math.min(6.0, bLvl * 0.2); // Up to 14s
         screenShake = 6;
 
       } else if (skillKey === 'shield') {
-        const shieldVal = Math.floor(stats.maxHp * (0.35 + sk.level * 0.05));
+        const sLvl = Math.max(1, sk.level);
+        const shieldVal = Math.floor(stats.maxHp * (0.30 + sLvl * 0.05));
+        const healVal = Math.floor(stats.maxHp * (0.25 + sLvl * 0.03));
         hero.shield = shieldVal;
-        hero.hp = Math.min(stats.maxHp, hero.hp + Math.floor(stats.maxHp * 0.3));
+        hero.hp = Math.min(stats.maxHp, hero.hp + healVal);
       }
 
       updateSkillsUI();
@@ -2475,43 +2512,76 @@
       return total;
     }
 
-    // SKILLS TAB RENDERING
+    // SKILLS TAB RENDERING (Intuitive Real Damage & Clear Effect Numbers)
     function updateSkillsUI() {
       const container = document.getElementById('skillsList');
       if (!container) return;
 
+      const stats = getEffectiveStats();
       const skillConfigs = [
         { 
           key: 'slashWave', 
           icon: '🌊', 
-          desc: '전방으로 검기를 날려 관통 공격 (250% + 레벨당 40% 피해)', 
-          unlockLvl: 1, 
           baseCost: 200, 
-          mult: 1.35 
+          mult: 1.35,
+          getDesc: (lvl) => {
+            const mult = (250 + lvl * 40);
+            const dmg = Math.floor(stats.atk * (mult / 100));
+            const nextMult = (250 + (lvl + 1) * 40);
+            const nextDmg = Math.floor(stats.atk * (nextMult / 100));
+            return `
+              <div>전방으로 검기를 날려 관통 피해: <b class="text-cyan-300 font-mono">${mult}% (💥 ${formatNumber(dmg)})</b></div>
+              <div class="text-[9px] text-slate-400 mt-0.5">다음 Lv.${lvl + 1}: <span class="text-emerald-400 font-mono">${nextMult}% (💥 ${formatNumber(nextDmg)})</span></div>
+            `;
+          }
         },
         { 
           key: 'meteor', 
           icon: '☄️', 
-          desc: '하늘에서 운석을 떨어뜨려 화면 전체 적 강타 (450% + 레벨당 80% 피해)', 
-          unlockLvl: 10, 
           baseCost: 1000, 
-          mult: 1.45 
+          mult: 1.45,
+          getDesc: (lvl) => {
+            const mult = (450 + lvl * 80);
+            const dmg = Math.floor(stats.atk * (mult / 100));
+            const nextMult = (450 + (lvl + 1) * 80);
+            const nextDmg = Math.floor(stats.atk * (nextMult / 100));
+            return `
+              <div>하늘에서 거대 운석 소환 광역 피해: <b class="text-cyan-300 font-mono">${mult}% (💥 ${formatNumber(dmg)})</b></div>
+              <div class="text-[9px] text-slate-400 mt-0.5">다음 Lv.${lvl + 1}: <span class="text-emerald-400 font-mono">${nextMult}% (💥 ${formatNumber(nextDmg)})</span></div>
+            `;
+          }
         },
         { 
           key: 'berserk', 
           icon: '🔥', 
-          desc: '8초 동안 공격속도 60% 및 치명타율 30% 증가', 
-          unlockLvl: 25, 
           baseCost: 3500, 
-          mult: 1.55 
+          mult: 1.55,
+          getDesc: (lvl) => {
+            const spd = 50 + lvl * 10;
+            const crit = 25 + lvl * 5;
+            const atk = 10 + lvl * 5;
+            const dur = (8.0 + Math.min(6.0, lvl * 0.2)).toFixed(1);
+            return `
+              <div>${dur}초간 폭주: <b class="text-amber-300">공속 +${spd}%</b>, <b class="text-rose-300">치명타 +${crit}%</b>, <b class="text-cyan-300">공격력 +${atk}%</b></div>
+              <div class="text-[9px] text-slate-400 mt-0.5">다음 Lv.${lvl + 1}: <span class="text-emerald-400">공속 +${spd + 10}%, 치명타 +${crit + 5}%, 공격력 +${atk + 5}%</span></div>
+            `;
+          }
         },
         { 
           key: 'shield', 
           icon: '🛡️', 
-          desc: '최대 체력 35% 방어막 생성 및 즉시 체력 30% 회복', 
-          unlockLvl: 50, 
           baseCost: 8000, 
-          mult: 1.65 
+          mult: 1.65,
+          getDesc: (lvl) => {
+            const sPct = 30 + lvl * 5;
+            const hPct = 25 + lvl * 3;
+            const sHp = Math.floor(stats.maxHp * (sPct / 100));
+            const hHp = Math.floor(stats.maxHp * (hPct / 100));
+            return `
+              <div>신성한 가호: <b class="text-cyan-300">실드 +${formatNumber(sHp)} (${sPct}%)</b> + <b class="text-emerald-300">힐 +${formatNumber(hHp)} (${hPct}%)</b></div>
+              <div class="text-[9px] text-slate-400 mt-0.5">다음 Lv.${lvl + 1}: <span class="text-emerald-400">실드 ${sPct + 5}%, 힐 ${hPct + 3}%</span></div>
+            `;
+          }
         },
       ];
 
@@ -2523,27 +2593,27 @@
         const canAfford = game.gold >= upgradeCost;
 
         html += `
-          <div class="pixel-box p-2.5 bg-[#171329] flex items-center justify-between gap-2 border-[#2f224f]">
-            <div class="flex items-center gap-2">
-              <span class="text-xl sm:text-2xl">${cfg.icon}</span>
-              <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="font-extrabold text-slate-100">${sk.name}</span>
+          <div class="pixel-box p-2 sm:p-2.5 bg-[#171329] flex items-center justify-between gap-2 border-[#2f224f]">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-xl sm:text-2xl shrink-0">${cfg.icon}</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-extrabold text-slate-100 text-xs sm:text-sm">${sk.name}</span>
                   <span class="text-[10px] text-purple-400 font-mono">Lv.${sk.level}</span>
-                  <span class="text-[9px] text-slate-400">쿨타임 ${sk.cd}초</span>
+                  <span class="text-[9px] text-slate-400 font-mono">쿨타임 ${sk.cd}초</span>
                 </div>
-                <div class="text-[10px] text-slate-300 max-w-[210px] sm:max-w-xs mt-0.5">${cfg.desc}</div>
-                ${sk.curCd > 0 ? `<div class="text-[10px] text-rose-400 font-bold">쿨다운: ${sk.curCd.toFixed(1)}s</div>` : ''}
+                <div class="text-[10px] text-slate-300 mt-0.5">${cfg.getDesc(sk.level)}</div>
+                ${sk.curCd > 0 ? `<div class="text-[10px] text-rose-400 font-bold font-mono mt-0.5">쿨다운: ${sk.curCd.toFixed(1)}s</div>` : ''}
               </div>
             </div>
-            <div class="flex flex-col items-end gap-1">
-              <button class="btn-upgrade-skill pixel-btn px-2.5 py-1 rounded font-extrabold text-xs ${canAfford ? 'bg-purple-700 hover:bg-purple-600 text-white' : 'bg-slate-800 text-slate-500'}"
+            <div class="flex flex-col items-end gap-1 shrink-0">
+              <button class="btn-upgrade-skill pixel-btn px-2.5 py-1 rounded font-extrabold text-xs whitespace-nowrap ${canAfford ? 'bg-purple-700 hover:bg-purple-600 text-white' : 'bg-slate-800 text-slate-500'}"
                 data-skill="${cfg.key}" data-cost="${upgradeCost}" ${canAfford ? '' : 'disabled'}>
                 <span>${sk.level === 0 ? '습득' : '레벨업'}</span>
-                <span class="text-[10px] text-amber-300 font-bold">💰 ${formatNumber(upgradeCost)}</span>
+                <span class="text-[10px] text-amber-300 font-bold font-mono">💰 ${formatNumber(upgradeCost)}</span>
               </button>
               ${sk.level > 0 ? `
-                <button class="btn-cast-skill pixel-btn px-2 py-0.5 rounded text-[10px] font-bold ${sk.curCd <= 0 ? 'bg-cyan-700 hover:bg-cyan-600 text-cyan-100' : 'bg-slate-800 text-slate-500'}"
+                <button class="btn-cast-skill pixel-btn px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${sk.curCd <= 0 ? 'bg-cyan-700 hover:bg-cyan-600 text-cyan-100' : 'bg-slate-800 text-slate-500'}"
                   data-skill="${cfg.key}" ${sk.curCd <= 0 ? '' : 'disabled'}>
                   수동 시전
                 </button>
@@ -2646,7 +2716,7 @@
       }
     }
 
-    // Show Item Detail Panel
+    // Show Item Detail & Upgrade Modal (Center Pop-up Window)
     window.showItemDetail = function(itemId, isEquipped) {
       let item = null;
       if (isEquipped) {
@@ -2660,32 +2730,50 @@
       if (!item) return;
 
       selectedItem = { item, isEquipped };
-      const panel = document.getElementById('itemDetailPanel');
-      if (!panel) return;
-      panel.classList.remove('hidden');
+      const modal = document.getElementById('itemDetailModal');
+      const card = document.getElementById('itemDetailCard');
+      if (!modal) return;
+      modal.classList.remove('hidden');
 
       const tier = TIERS[item.tier - 1];
       const name = GEAR_NAMES[item.type][item.tier - 1];
       const info = EQUIP_TYPES[item.type];
 
-      document.getElementById('detailItemName').textContent = `[${tier.name}] ${name}`;
+      // Styling & Icons
+      card.style.borderColor = tier.border;
+      document.getElementById('detailItemIcon').textContent = info.icon;
+      document.getElementById('detailItemName').textContent = `[${tier.name}] ${name} +${item.level}강화`;
       document.getElementById('detailItemName').style.color = tier.color;
       document.getElementById('detailItemTier').textContent = `${tier.name} 등급 ${info.name} (보유: ${item.count || 1}개)`;
 
-      // Stat calculation
+      // Current & Next Stat Calculation
       const baseStatVal = (item.type === 'armor' ? 80 : 15) * tier.multiplier;
       const currentStat = Math.floor(baseStatVal * (1 + item.level * 0.15));
-      document.getElementById('detailItemStats').textContent = 
-        `${info.statName}: +${formatNumber(currentStat)} (강화 레벨 Lv.${item.level})`;
+      const nextStat = Math.floor(baseStatVal * (1 + (item.level + 1) * 0.15));
+      const statDiff = nextStat - currentStat;
 
-      // Upgrade Cost
+      document.getElementById('detailItemStats').textContent = `${info.statName} +${formatNumber(currentStat)}`;
+      document.getElementById('detailNextItemStats').textContent = `${info.statName} +${formatNumber(nextStat)} (+${formatNumber(statDiff)})`;
+
+      // Populate real-time currency display inside modal
+      const modalGoldEl = document.getElementById('detailModalGold');
+      const modalGemsEl = document.getElementById('detailModalGems');
+      if (modalGoldEl) modalGoldEl.textContent = formatNumber(game.gold);
+      if (modalGemsEl) modalGemsEl.textContent = formatNumber(game.gems);
+
+      // Upgrade Cost & Button styling based on afford
       const upgradeCost = Math.floor(300 * Math.pow(1.3, item.level) * tier.multiplier);
+      const canAfford = game.gold >= upgradeCost;
+      document.getElementById('txtUpgradeBtnCost').textContent = `💰 ${formatNumber(upgradeCost)}`;
+      
       const btnUpgrade = document.getElementById('btnUpgradeItem');
-      btnUpgrade.textContent = `강화 (💰 ${formatNumber(upgradeCost)})`;
+      btnUpgrade.className = canAfford
+        ? 'pixel-btn bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold py-2 rounded flex flex-col items-center'
+        : 'pixel-btn bg-slate-800 text-slate-500 font-extrabold py-2 rounded flex flex-col items-center';
+
       btnUpgrade.onclick = () => {
         if (game.gold >= upgradeCost) {
           game.gold -= upgradeCost;
-          // If in inventory and stacked, split 1 item to upgrade separately
           if (!isEquipped && item.count > 1) {
             item.count--;
             const upgradedCopy = {
@@ -2700,7 +2788,7 @@
             saveGame();
             updateUI();
             window.showItemDetail(upgradedCopy.id, false);
-            displayToast(`${name} +${upgradedCopy.level} 강화 성공! (1개 분리 강화)`);
+            displayToast(`${name} +${upgradedCopy.level} 강화 성공!`);
           } else {
             item.level++;
             audio.playUpgrade();
@@ -2718,19 +2806,27 @@
       const btnEquip = document.getElementById('btnEquipItem');
       if (isEquipped) {
         btnEquip.textContent = '현재 착용 중';
+        btnEquip.className = 'pixel-btn bg-slate-800 text-slate-500 font-extrabold py-2 rounded flex items-center justify-center cursor-not-allowed';
         btnEquip.disabled = true;
       } else {
         btnEquip.textContent = '장착하기';
+        btnEquip.className = 'pixel-btn bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold py-2 rounded flex items-center justify-center';
         btnEquip.disabled = false;
         btnEquip.onclick = () => {
           equipSpecificGear(item);
-          panel.classList.add('hidden');
+          modal.classList.add('hidden');
         };
       }
     };
 
-    document.getElementById('btnCloseDetail').addEventListener('click', () => {
-      document.getElementById('itemDetailPanel').classList.add('hidden');
+    document.getElementById('btnCloseDetailModal').addEventListener('click', () => {
+      document.getElementById('itemDetailModal').classList.add('hidden');
+    });
+
+    document.getElementById('itemDetailModal').addEventListener('click', (e) => {
+      if (e.target.id === 'itemDetailModal') {
+        document.getElementById('itemDetailModal').classList.add('hidden');
+      }
     });
 
     // Equip specific item from inventory
