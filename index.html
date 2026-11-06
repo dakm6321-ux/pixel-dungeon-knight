@@ -500,15 +500,7 @@
             </div>
           </div>
 
-          <!-- Rate Information Collapse / View -->
-          <div id="rateInfoBox" class="hidden pixel-box p-2.5 bg-[#120e21] text-[10px] flex flex-col gap-1.5">
-            <div class="font-bold text-yellow-300 text-xs border-b border-slate-700 pb-1">
-              📜 현재 소환 레벨별 등장 확률 안내
-            </div>
-            <div id="rateInfoContent" class="grid grid-cols-2 gap-1 text-slate-300">
-              <!-- Rendered via JS -->
-            </div>
-          </div>
+<!-- Rate info modal opens centered like equipment modal -->
 
         </div>
 
@@ -627,6 +619,43 @@
           장착하기
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- GACHA PROBABILITY RATES MODAL (Centered Pop-up) -->
+  <div id="rateInfoModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 select-none">
+    <div class="pixel-box w-full max-w-xs sm:max-w-sm bg-[#1b1533] p-4 flex flex-col gap-3 border-2 border-cyan-400 shadow-2xl relative">
+      <div class="flex justify-between items-center border-b border-[#362758] pb-2">
+        <h3 class="text-sm sm:text-base font-extrabold text-cyan-300 flex items-center gap-1.5">
+          📜 장비 소환 등급별 확률 안내
+        </h3>
+        <button id="btnCloseRateModal" class="text-slate-400 hover:text-white font-bold text-base px-1.5 py-0.5">✕</button>
+      </div>
+
+      <!-- Real-time Level & Currency Header -->
+      <div class="flex items-center justify-between bg-[#100a20] px-2.5 py-1.5 rounded border border-[#2d1e4a] text-[11px]">
+        <div class="flex items-center gap-1 text-yellow-300 font-bold">
+          <span>소환 레벨:</span>
+          <span id="rateModalLevelBadge" class="font-mono text-cyan-300 font-extrabold">Lv.1</span>
+        </div>
+        <div class="flex items-center gap-1 text-cyan-300 font-bold">
+          <span>💎 보유 보석:</span>
+          <span id="rateModalGemsBadge" class="font-mono text-cyan-200">0</span>
+        </div>
+      </div>
+
+      <!-- Scrollable / Clean Rates List -->
+      <div id="rateInfoContent" class="flex flex-col gap-1.5 max-h-[300px] overflow-y-auto p-1 text-xs">
+        <!-- Rendered via JS -->
+      </div>
+
+      <p class="text-[10px] text-slate-400 bg-[#120a22] p-2 rounded border border-[#261845] leading-relaxed">
+        💡 소환을 진행할수록 경험치가 누적되어 소환 레벨이 상승하며, <span class="text-yellow-300 font-bold">영웅·전설·신화·초월</span> 등급의 획득 확률이 대폭 증가합니다.
+      </p>
+
+      <button id="btnConfirmRateModal" class="pixel-btn w-full bg-cyan-700 hover:bg-cyan-600 text-white font-extrabold text-xs py-2 rounded">
+        확인
+      </button>
     </div>
   </div>
 
@@ -2962,17 +2991,30 @@
       const expPct = Math.min(100, (game.gachaExp / maxExp) * 100);
       document.getElementById('barGachaExp').style.width = `${expPct}%`;
 
-      // Rate info content
+      // Rate info modal content
       const rateContent = document.getElementById('rateInfoContent');
+      const rateLvlBadge = document.getElementById('rateModalLevelBadge');
+      const rateGemsBadge = document.getElementById('rateModalGemsBadge');
+      if (rateLvlBadge) rateLvlBadge.textContent = `Lv.${game.gachaLevel}`;
+      if (rateGemsBadge) rateGemsBadge.textContent = formatNumber(game.gems);
+
       if (rateContent) {
         const rates = GACHA_RATES_BY_LEVEL[game.gachaLevel - 1] || GACHA_RATES_BY_LEVEL[0];
         let rHtml = '';
         TIERS.forEach(t => {
           const rateVal = rates[`tier${t.id}`] || 0;
           rHtml += `
-            <div class="flex justify-between items-center py-0.5 px-1 bg-[#1a142e] rounded">
-              <span style="color: ${t.color}; font-weight: bold;">[${t.name}]</span>
-              <span class="font-mono">${rateVal.toFixed(1)}%</span>
+            <div class="pixel-box p-1.5 px-2 bg-[#140e24] flex items-center justify-between border" style="border-color: ${t.border};">
+              <div class="flex items-center gap-1.5">
+                <span class="font-extrabold text-xs" style="color: ${t.color};">[${t.name}]</span>
+                <span class="text-[10px] text-slate-400 font-mono">티어 ${t.id}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-16 h-1.5 bg-[#251b3d] rounded overflow-hidden hidden sm:block">
+                  <div class="h-full" style="width: ${Math.min(100, rateVal)}%; background-color: ${t.color};"></div>
+                </div>
+                <span class="font-mono font-bold text-xs" style="color: ${rateVal > 0 ? '#facc15' : '#64748b'};">${rateVal.toFixed(1)}%</span>
+              </div>
             </div>
           `;
         });
@@ -2980,9 +3022,21 @@
       }
     }
 
-    document.getElementById('btnShowRates').addEventListener('click', () => {
-      const box = document.getElementById('rateInfoBox');
-      box.classList.toggle('hidden');
+    function openRateModal() {
+      audio.init();
+      renderGachaTab();
+      document.getElementById('rateInfoModal').classList.remove('hidden');
+    }
+
+    function closeRateModal() {
+      document.getElementById('rateInfoModal').classList.add('hidden');
+    }
+
+    document.getElementById('btnShowRates').addEventListener('click', openRateModal);
+    document.getElementById('btnCloseRateModal').addEventListener('click', closeRateModal);
+    document.getElementById('btnConfirmRateModal').addEventListener('click', closeRateModal);
+    document.getElementById('rateInfoModal').addEventListener('click', (e) => {
+      if (e.target.id === 'rateInfoModal') closeRateModal();
     });
 
     // Perform Gacha Summon
