@@ -1190,7 +1190,11 @@
         const s5 = game.quests.find(q => q.id === 'reachStage5');
         if (s5 && s5.claimed && game.questProgress.stageMilestoneClaimed < 5) game.questProgress.stageMilestoneClaimed = 5;
         const u50 = game.quests.find(q => q.id === 'upgradeStat50');
-        if (u50 && u50.claimed && game.questProgress.statMilestoneClaimed < 50) game.questProgress.statMilestoneClaimed = 50;
+        if (u50 && u50.claimed && game.questProgress.statMilestoneClaimed < 1) game.questProgress.statMilestoneClaimed = 1;
+        // If loaded old milestone format (e.g. 50, 100), convert to count (e.g. 1, 2)
+        if (game.questProgress.statMilestoneClaimed >= 50) {
+          game.questProgress.statMilestoneClaimed = Math.floor(game.questProgress.statMilestoneClaimed / 50);
+        }
       }
       game.pendingStage = null;
       initDefaultGear();
@@ -3112,11 +3116,11 @@
       }
       const singleStageReward = 200 + Math.min(2000, Math.floor(nextTargetStage / 5) * 20);
 
-      // 4. 스텟 총 강화 (50 -> 100 -> 150... 무한 진보, 미수령 누적)
+      // 4. 스텟 50회 강화 (50회마다 무한 반복, 미수령 누적)
       const totalStats = game.totalStatUpgrades || 0;
-      const claimedStatMilestone = qp.statMilestoneClaimed || 0;
-      const statUnclaimed = Math.max(0, Math.floor((totalStats - claimedStatMilestone) / 50));
-      const nextTargetStat = claimedStatMilestone + 50;
+      const statsAchieved = Math.floor(totalStats / 50);
+      const statUnclaimed = Math.max(0, statsAchieved - (qp.statMilestoneClaimed || 0));
+      const statsCurrent = totalStats % 50;
 
       return {
         kills: {
@@ -3149,13 +3153,12 @@
         },
         stats: {
           id: 'stats',
-          title: `스텟 총 ${nextTargetStat}회 강화`,
+          title: '스텟 50회 강화 (무한 반복)',
           desc: statUnclaimed > 0
-            ? `진행도: 총 ${formatNumber(totalStats)}회 달성 (${statUnclaimed}단계 연속 수령 대기)`
-            : `진행도: ${totalStats % 50} / 50 (목표: 총 ${nextTargetStat}회)`,
+            ? `진행도: 50 / 50 (${statUnclaimed}회 수령 대기 중! 총 ${formatNumber(totalStats)}회 강화)`
+            : `진행도: ${statsCurrent} / 50 (총 ${formatNumber(totalStats)}회 강화)`,
           unclaimed: statUnclaimed,
           reward: statUnclaimed > 0 ? statUnclaimed * 150 : 150,
-          targetStat: nextTargetStat,
         }
       };
     }
@@ -3240,9 +3243,8 @@
         const nextStage = game.questProgress.stageMilestoneClaimed + 5;
         displayToast(`스테이지 돌파 보상 완료! 보석 💎 ${formatNumber(gemsEarned)} 획득! (다음 목표: STAGE ${nextStage})`);
       } else if (category === 'stats') {
-        game.questProgress.statMilestoneClaimed += 50 * q.unclaimed;
-        const nextStat = game.questProgress.statMilestoneClaimed + 50;
-        displayToast(`스텟 강화 업적 완료! 보석 💎 ${formatNumber(gemsEarned)} 획득! (다음 목표: ${nextStat}회)`);
+        game.questProgress.statMilestoneClaimed += q.unclaimed;
+        displayToast(`스텟 50회 강화 업적 완료! 보석 💎 ${formatNumber(gemsEarned)} 획득 (${q.unclaimed}회 달성)`);
       }
 
       audio.playCoin();
@@ -3263,7 +3265,7 @@
           if (cat === 'kills') game.questProgress.killsClaimed += q.unclaimed;
           else if (cat === 'gacha') game.questProgress.gachaClaimed += q.unclaimed;
           else if (cat === 'stage') game.questProgress.stageMilestoneClaimed += 5 * q.unclaimed;
-          else if (cat === 'stats') game.questProgress.statMilestoneClaimed += 50 * q.unclaimed;
+          else if (cat === 'stats') game.questProgress.statMilestoneClaimed += q.unclaimed;
         }
       });
 
