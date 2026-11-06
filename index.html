@@ -533,11 +533,16 @@
         <!-- ===================================== -->
         <div id="tab-quest" class="tab-pane hidden flex flex-col gap-3">
           
-          <!-- Achievements Section -->
+          <!-- Achievements Section (Infinite Cumulative Progressive Quests) -->
           <div class="flex flex-col gap-2">
-            <span class="text-xs text-yellow-400 font-bold flex items-center gap-1">
-              🏆 도전과제 & 보석 보상
-            </span>
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-yellow-400 font-bold flex items-center gap-1">
+                🏆 무한 연속 업적 & 보석 보상
+              </span>
+              <button id="btnClaimAllQuests" class="hidden pixel-btn bg-cyan-600 hover:bg-cyan-500 text-black font-extrabold text-[10px] px-2 py-0.5 rounded animate-pulse">
+                🎁 모든 보상 일괄 수령
+              </button>
+            </div>
             <div id="questsContainer" class="flex flex-col gap-1.5 text-xs">
               <!-- Dynamically populated quests -->
             </div>
@@ -1072,14 +1077,13 @@
       },
       inventory: [], // Array of gear objects: { id, type, tier, level, count }
 
-      // Quests / Achievements
-      quests: [
-        { id: 'kill50', name: '몬스터 50마리 토벌', target: 50, current: 0, reward: 200, claimed: false },
-        { id: 'kill200', name: '몬스터 200마리 토벌', target: 200, current: 0, reward: 500, claimed: false },
-        { id: 'gacha20', name: '장비 소환 20회 달성', target: 20, current: 0, reward: 300, claimed: false },
-        { id: 'reachStage5', name: '스테이지 5 진입', target: 5, current: 1, reward: 400, claimed: false },
-        { id: 'upgradeStat50', name: '스텟 총 50회 강화', target: 50, current: 0, reward: 250, claimed: false },
-      ],
+      // Infinite & Cumulative Progressive Achievements State
+      questProgress: {
+        killsClaimed: 0,
+        gachaClaimed: 0,
+        stageMilestoneClaimed: 0,
+        statMilestoneClaimed: 0,
+      },
       totalKills: 0,
       totalGachaPulls: 0,
       totalStatUpgrades: 0,
@@ -1129,9 +1133,31 @@
           if (parsed.equipped) game.equipped = { ...game.equipped, ...parsed.equipped };
           if (parsed.inventory) game.inventory = parsed.inventory;
           if (parsed.quests) game.quests = parsed.quests;
+          if (parsed.questProgress) game.questProgress = { ...game.questProgress, ...parsed.questProgress };
         }
       } catch (err) {
         console.warn('LocalStorage load failed:', err);
+      }
+      // Migrate old quest records if needed
+      if (!game.questProgress) {
+        game.questProgress = {
+          killsClaimed: 0,
+          gachaClaimed: 0,
+          stageMilestoneClaimed: 0,
+          statMilestoneClaimed: 0,
+        };
+      }
+      if (game.quests && Array.isArray(game.quests)) {
+        const k50 = game.quests.find(q => q.id === 'kill50');
+        const k200 = game.quests.find(q => q.id === 'kill200');
+        if (k50 && k50.claimed && game.questProgress.killsClaimed < 1) game.questProgress.killsClaimed += 1;
+        if (k200 && k200.claimed && game.questProgress.killsClaimed < 5) game.questProgress.killsClaimed += 4;
+        const g20 = game.quests.find(q => q.id === 'gacha20');
+        if (g20 && g20.claimed && game.questProgress.gachaClaimed < 2) game.questProgress.gachaClaimed += 2;
+        const s5 = game.quests.find(q => q.id === 'reachStage5');
+        if (s5 && s5.claimed && game.questProgress.stageMilestoneClaimed < 5) game.questProgress.stageMilestoneClaimed = 5;
+        const u50 = game.quests.find(q => q.id === 'upgradeStat50');
+        if (u50 && u50.claimed && game.questProgress.statMilestoneClaimed < 50) game.questProgress.statMilestoneClaimed = 50;
       }
       game.pendingStage = null;
       initDefaultGear();
@@ -1856,12 +1882,7 @@
         });
       }
 
-      // Quest check
-      game.quests.forEach(q => {
-        if (q.id === 'kill50' || q.id === 'kill200') {
-          q.current = game.totalKills;
-        }
-      });
+      // Total kills incremented automatically
 
       // Check if user reserved a stage change via arrows -> Auto transition upon round end!
       if (game.pendingStage !== null && game.pendingStage !== game.stage) {
@@ -2434,9 +2455,7 @@
             game.totalStatUpgrades += currentBulk;
             audio.playUpgrade();
 
-            game.quests.forEach(q => {
-              if (q.id === 'upgradeStat50') q.current = game.totalStatUpgrades;
-            });
+            // Stat upgrades tracked in game.totalStatUpgrades
 
             saveGame();
             updateUI();
@@ -2913,9 +2932,7 @@
         }
       }
 
-      game.quests.forEach(q => {
-        if (q.id === 'gacha20') q.current = game.totalGachaPulls;
-      });
+      // Gacha pulls tracked in game.totalGachaPulls
 
       showGachaResultsModal(results, pulls, cost);
       saveGame();
@@ -2958,36 +2975,127 @@
     document.getElementById('btnGacha10').addEventListener('click', () => performGacha(10, 900));
     document.getElementById('btnGacha30').addEventListener('click', () => performGacha(30, 2500));
 
-    // QUESTS & SETTINGS TAB
+    // ============================================================
+    // INFINITE & CUMULATIVE PROGRESSIVE ACHIEVEMENTS
+    // ============================================================
+    function getQuestData() {
+      if (!game.questProgress) {
+        game.questProgress = {
+          killsClaimed: 0,
+          gachaClaimed: 0,
+          stageMilestoneClaimed: 0,
+          statMilestoneClaimed: 0,
+        };
+      }
+      const qp = game.questProgress;
+
+      // 1. 몬스터 50마리 토벌 (무한 반복, 미수령 누적)
+      const totalKills = game.totalKills || 0;
+      const killsAchieved = Math.floor(totalKills / 50);
+      const killsUnclaimed = Math.max(0, killsAchieved - (qp.killsClaimed || 0));
+      const killsCurrent = totalKills % 50;
+
+      // 2. 장비 소환 10회 달성 (무한 반복, 미수령 누적)
+      const totalGacha = game.totalGachaPulls || 0;
+      const gachaAchieved = Math.floor(totalGacha / 10);
+      const gachaUnclaimed = Math.max(0, gachaAchieved - (qp.gachaClaimed || 0));
+      const gachaCurrent = totalGacha % 10;
+
+      // 3. 스테이지 진입 및 돌파 (5 -> 10 -> 15... 1000 무한 진보, 미수령 누적)
+      const highestStage = game.highestStage || 1;
+      const claimedStageMilestone = qp.stageMilestoneClaimed || 0;
+      const stageUnclaimed = Math.max(0, Math.floor((highestStage - claimedStageMilestone) / 5));
+      const nextTargetStage = Math.min(MAX_GAME_STAGE, claimedStageMilestone + 5);
+      
+      let stageRewardTotal = 0;
+      for (let s = claimedStageMilestone + 5; s <= claimedStageMilestone + 5 * stageUnclaimed; s += 5) {
+        stageRewardTotal += 200 + Math.min(2000, Math.floor(s / 5) * 20);
+      }
+      const singleStageReward = 200 + Math.min(2000, Math.floor(nextTargetStage / 5) * 20);
+
+      // 4. 스텟 총 강화 (50 -> 100 -> 150... 무한 진보, 미수령 누적)
+      const totalStats = game.totalStatUpgrades || 0;
+      const claimedStatMilestone = qp.statMilestoneClaimed || 0;
+      const statUnclaimed = Math.max(0, Math.floor((totalStats - claimedStatMilestone) / 50));
+      const nextTargetStat = claimedStatMilestone + 50;
+
+      return {
+        kills: {
+          id: 'kills',
+          title: '몬스터 50마리 토벌 (무한 반복)',
+          desc: killsUnclaimed > 0
+            ? `진행도: 50 / 50 (${killsUnclaimed}회 수령 대기 중! 총 ${formatNumber(totalKills)}마리 처치)`
+            : `진행도: ${killsCurrent} / 50 (총 ${formatNumber(totalKills)}마리 처치)`,
+          unclaimed: killsUnclaimed,
+          reward: killsUnclaimed > 0 ? killsUnclaimed * 150 : 150,
+        },
+        gacha: {
+          id: 'gacha',
+          title: '장비 소환 10회 달성 (무한 반복)',
+          desc: gachaUnclaimed > 0
+            ? `진행도: 10 / 10 (${gachaUnclaimed}회 수령 대기 중! 총 ${formatNumber(totalGacha)}회 소환)`
+            : `진행도: ${gachaCurrent} / 10 (총 ${formatNumber(totalGacha)}회 소환)`,
+          unclaimed: gachaUnclaimed,
+          reward: gachaUnclaimed > 0 ? gachaUnclaimed * 150 : 150,
+        },
+        stage: {
+          id: 'stage',
+          title: `STAGE ${nextTargetStage} 진입 및 돌파`,
+          desc: stageUnclaimed > 0
+            ? `진행도: STAGE ${highestStage} 돌파 완료 (${stageUnclaimed}단계 연속 수령 대기)`
+            : `진행도: STAGE ${highestStage} / ${nextTargetStage} (목표: STAGE ${nextTargetStage})`,
+          unclaimed: stageUnclaimed,
+          reward: stageUnclaimed > 0 ? stageRewardTotal : singleStageReward,
+          targetStage: nextTargetStage,
+        },
+        stats: {
+          id: 'stats',
+          title: `스텟 총 ${nextTargetStat}회 강화`,
+          desc: statUnclaimed > 0
+            ? `진행도: 총 ${formatNumber(totalStats)}회 달성 (${statUnclaimed}단계 연속 수령 대기)`
+            : `진행도: ${totalStats % 50} / 50 (목표: 총 ${nextTargetStat}회)`,
+          unclaimed: statUnclaimed,
+          reward: statUnclaimed > 0 ? statUnclaimed * 150 : 150,
+          targetStat: nextTargetStat,
+        }
+      };
+    }
+
     function updateQuestsUI() {
       const container = document.getElementById('questsContainer');
       if (!container) return;
 
-      const stgQuest = game.quests.find(q => q.id === 'reachStage5');
-      if (stgQuest) stgQuest.current = game.highestStage;
-
-      let hasClaimable = false;
+      const qData = getQuestData();
+      const keys = ['kills', 'gacha', 'stage', 'stats'];
+      let totalClaimableGems = 0;
       let html = '';
 
-      game.quests.forEach(q => {
-        const isComplete = q.current >= q.target;
-        if (isComplete && !q.claimed) hasClaimable = true;
+      keys.forEach(k => {
+        const q = qData[k];
+        if (q.unclaimed > 0) {
+          totalClaimableGems += q.reward;
+        }
+
+        const buttonHtml = q.unclaimed > 0
+          ? `<button class="pixel-btn px-2.5 py-1 rounded text-[10px] font-bold bg-cyan-600 hover:bg-cyan-500 text-black animate-pulse whitespace-nowrap"
+               onclick="claimInfiniteQuest('${q.id}')">
+               보상 💎 ${formatNumber(q.reward)} ${q.unclaimed > 1 ? `(${q.unclaimed}회)` : ''}
+             </button>`
+          : `<button class="pixel-btn px-2.5 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-500 whitespace-nowrap" disabled>
+               보상 💎 ${formatNumber(q.reward)}
+             </button>`;
 
         html += `
-          <div class="pixel-box p-2 bg-[#171329] flex items-center justify-between gap-2 border-[#2c2049]">
-            <div>
-              <div class="font-bold text-slate-200">${q.name}</div>
-              <div class="text-[10px] text-slate-400">진행도: ${Math.min(q.target, q.current)} / ${q.target}</div>
+          <div class="pixel-box p-2 bg-[#171329] flex items-center justify-between gap-2 border-[#2c2049] transition-all ${q.unclaimed > 0 ? 'border-cyan-500/50 bg-[#1d1633]' : ''}">
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-slate-200 text-xs truncate flex items-center gap-1">
+                <span>${q.title}</span>
+                ${q.unclaimed > 1 ? `<span class="bg-amber-900/60 text-amber-300 border border-amber-500/40 text-[9px] px-1 rounded font-mono font-normal">x${q.unclaimed} 누적</span>` : ''}
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5 truncate">${q.desc}</div>
             </div>
-            <div>
-              ${q.claimed ? `
-                <span class="text-[10px] text-slate-500 font-bold px-2 py-1">완료됨</span>
-              ` : `
-                <button class="pixel-btn px-2.5 py-1 rounded text-[10px] font-bold ${isComplete ? 'bg-cyan-600 hover:bg-cyan-500 text-black animate-pulse' : 'bg-slate-800 text-slate-500'}"
-                  onclick="claimQuestReward('${q.id}')" ${isComplete ? '' : 'disabled'}>
-                  보상 💎 ${q.reward}
-                </button>
-              `}
+            <div class="shrink-0">
+              ${buttonHtml}
             </div>
           </div>
         `;
@@ -2995,24 +3103,85 @@
 
       container.innerHTML = html;
 
+      // Quest Badge on Bottom Tab
       const qBadge = document.getElementById('questBadge');
       if (qBadge) {
-        if (hasClaimable) qBadge.classList.remove('hidden');
+        if (totalClaimableGems > 0) qBadge.classList.remove('hidden');
         else qBadge.classList.add('hidden');
+      }
+
+      // Claim All Button at Top of Quests Section
+      const btnClaimAll = document.getElementById('btnClaimAllQuests');
+      if (btnClaimAll) {
+        if (totalClaimableGems > 0) {
+          btnClaimAll.textContent = `🎁 모든 보상 일괄 수령 (💎 ${formatNumber(totalClaimableGems)})`;
+          btnClaimAll.classList.remove('hidden');
+        } else {
+          btnClaimAll.classList.add('hidden');
+        }
       }
     }
 
-    window.claimQuestReward = function(questId) {
-      const q = game.quests.find(item => item.id === questId);
-      if (q && !q.claimed && q.current >= q.target) {
-        q.claimed = true;
-        game.gems += q.reward;
+    window.claimInfiniteQuest = function(category) {
+      const qData = getQuestData();
+      const q = qData[category];
+      if (!q || q.unclaimed <= 0) return;
+
+      const gemsEarned = q.reward;
+      game.gems += gemsEarned;
+
+      if (category === 'kills') {
+        game.questProgress.killsClaimed += q.unclaimed;
+        displayToast(`몬스터 토벌 보상 완료! 보석 💎 ${formatNumber(gemsEarned)} 획득 (${q.unclaimed}회 달성)`);
+      } else if (category === 'gacha') {
+        game.questProgress.gachaClaimed += q.unclaimed;
+        displayToast(`장비 소환 업적 완료! 보석 💎 ${formatNumber(gemsEarned)} 획득 (${q.unclaimed}회 달성)`);
+      } else if (category === 'stage') {
+        game.questProgress.stageMilestoneClaimed += 5 * q.unclaimed;
+        const nextStage = game.questProgress.stageMilestoneClaimed + 5;
+        displayToast(`스테이지 돌파 보상 완료! 보석 💎 ${formatNumber(gemsEarned)} 획득! (다음 목표: STAGE ${nextStage})`);
+      } else if (category === 'stats') {
+        game.questProgress.statMilestoneClaimed += 50 * q.unclaimed;
+        const nextStat = game.questProgress.statMilestoneClaimed + 50;
+        displayToast(`스텟 강화 업적 완료! 보석 💎 ${formatNumber(gemsEarned)} 획득! (다음 목표: ${nextStat}회)`);
+      }
+
+      audio.playCoin();
+      saveGame();
+      updateUI();
+    };
+
+    window.claimAllQuests = function() {
+      const qData = getQuestData();
+      let totalEarned = 0;
+      let totalClaims = 0;
+
+      ['kills', 'gacha', 'stage', 'stats'].forEach(cat => {
+        const q = qData[cat];
+        if (q && q.unclaimed > 0) {
+          totalEarned += q.reward;
+          totalClaims += q.unclaimed;
+          if (cat === 'kills') game.questProgress.killsClaimed += q.unclaimed;
+          else if (cat === 'gacha') game.questProgress.gachaClaimed += q.unclaimed;
+          else if (cat === 'stage') game.questProgress.stageMilestoneClaimed += 5 * q.unclaimed;
+          else if (cat === 'stats') game.questProgress.statMilestoneClaimed += 50 * q.unclaimed;
+        }
+      });
+
+      if (totalEarned > 0) {
+        game.gems += totalEarned;
         audio.playCoin();
-        displayToast(`도전과제 완료! 보석 ${q.reward}개 획득!`);
+        displayToast(`🎉 모든 업적 보상 일괄 수령 완료! 총 보석 💎 ${formatNumber(totalEarned)} 획득!`);
         saveGame();
         updateUI();
       }
     };
+
+    // Claim All Quests Button Listener
+    const btnClaimAllQuestsEl = document.getElementById('btnClaimAllQuests');
+    if (btnClaimAllQuestsEl) {
+      btnClaimAllQuestsEl.addEventListener('click', window.claimAllQuests);
+    }
 
     // MANUAL SAVE, BACKUP & RESTORE MODAL (No prompt/confirm)
     document.getElementById('btnManualSave').addEventListener('click', () => {
