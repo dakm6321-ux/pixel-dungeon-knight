@@ -1306,7 +1306,7 @@
       let baseAtk = 10 + (game.stats.atk - 1) * 6;
       let baseMaxHp = 100 + (game.stats.maxHp - 1) * 35;
       let baseRegen = 2 + (game.stats.hpRegen - 1) * 1.5;
-      let baseCritRate = 5 + (game.stats.critRate - 1) * 0.5; // Max 75%
+      let baseCritRate = 5 + (game.stats.critRate - 1) * 1.0; // Scalable up to 100%
       let baseCritDmg = 150 + (game.stats.critDmg - 1) * 4; // %
       let baseAtkSpeed = 1.0 + (game.stats.atkSpeed - 1) * 0.03; // attacks per sec
 
@@ -1330,21 +1330,21 @@
         const rTier = TIERS[game.equipped.ring.tier - 1];
         const rLvl = game.equipped.ring.level;
         baseCritDmg += (20 * rTier.multiplier) * (1 + rLvl * 0.15);
-        baseCritRate += Math.min(25, (2 * rTier.multiplier));
+        baseCritRate += Math.min(30, (2.5 * rTier.multiplier));
       }
 
-      // Berserk active buff (Scales dynamically with skill level!)
+      // Berserk active buff (Boosts AtkSpeed, CRIT DMG, and Attack power!)
       if (game.skills.berserk.duration > 0) {
         const bLvl = Math.max(1, game.skills.berserk.level);
         const spdBonus = 0.50 + bLvl * 0.10; // Lv.1 = +60%, Lv.6 = +110%
-        const critBonus = 25 + bLvl * 5;    // Lv.1 = +30%, Lv.6 = +55%
+        const critDmgBonus = 50 + bLvl * 25; // Lv.1 = +75%, Lv.6 = +200% Crit DMG!
         const atkBonus = 1 + (0.10 + bLvl * 0.05); // Lv.1 = +15%, Lv.6 = +40%
         baseAtkSpeed *= (1 + spdBonus);
-        baseCritRate += critBonus;
+        baseCritDmg += critDmgBonus;
         baseAtk *= atkBonus;
       }
 
-      baseCritRate = Math.min(85, baseCritRate); // Hard cap 85%
+      baseCritRate = Math.min(100.0, baseCritRate); // Max 100% full critical cap
 
       // Combat Power
       const cp = Math.floor(
@@ -2492,6 +2492,26 @@
         else if (st.key === 'critDmg') curValDisplay = `${effective.critDmg}%`;
         else if (st.key === 'atkSpeed') curValDisplay = `${effective.atkSpeed}회/초`;
 
+        const isCritRateMaxed = (st.key === 'critRate' && effective.critRate >= 100);
+
+        let buttonContent = '';
+        if (isCritRateMaxed) {
+          buttonContent = `
+            <button class="pixel-btn px-2.5 py-1 rounded font-extrabold text-xs flex flex-col items-center min-w-[85px] sm:min-w-[95px] shrink-0 bg-slate-800 text-yellow-300 cursor-not-allowed border-yellow-500/50" disabled>
+              <span class="text-[11px] text-yellow-300 font-bold">MAX</span>
+              <span class="text-[9px] text-slate-400">100% 달성</span>
+            </button>
+          `;
+        } else {
+          buttonContent = `
+            <button class="btn-upgrade-stat pixel-btn px-2.5 py-1 rounded font-extrabold text-xs flex flex-col items-center min-w-[85px] sm:min-w-[95px] shrink-0 ${canAfford ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-slate-800 text-slate-500'}"
+              data-stat="${st.key}" data-cost="${cost}" ${canAfford ? '' : 'disabled'}>
+              <span class="text-[11px]">+${currentBulk} 강화</span>
+              <span class="text-[10px] text-amber-300 font-bold font-mono">💰 ${formatNumber(cost)}</span>
+            </button>
+          `;
+        }
+
         html += `
           <div class="pixel-box p-1.5 sm:p-2 bg-[#171329] flex items-center justify-between gap-1.5 border-[#2f224f]">
             <div class="flex items-center gap-2 min-w-0">
@@ -2499,18 +2519,14 @@
               <div class="min-w-0">
                 <div class="flex items-center gap-1.5 truncate">
                   <span class="font-extrabold text-slate-100 text-xs truncate">${st.name}</span>
-                  <span class="text-[10px] text-yellow-400 font-mono shrink-0">Lv.${curLvl}</span>
+                  <span class="text-[10px] text-yellow-400 font-mono shrink-0">${isCritRateMaxed ? 'MAX' : `Lv.${curLvl}`}</span>
                 </div>
                 <div class="text-[10px] sm:text-[11px] text-slate-300 font-bold truncate">
-                  현재: <span class="text-cyan-300">${curValDisplay}</span>
+                  현재: <span class="text-cyan-300 font-mono">${curValDisplay}</span>
                 </div>
               </div>
             </div>
-            <button class="btn-upgrade-stat pixel-btn px-2.5 py-1 rounded font-extrabold text-xs flex flex-col items-center min-w-[85px] sm:min-w-[95px] shrink-0 ${canAfford ? 'bg-emerald-700 hover:bg-emerald-600 text-white' : 'bg-slate-800 text-slate-500'}"
-              data-stat="${st.key}" data-cost="${cost}" ${canAfford ? '' : 'disabled'}>
-              <span class="text-[11px]">+${currentBulk} 강화</span>
-              <span class="text-[10px] text-amber-300 font-bold">💰 ${formatNumber(cost)}</span>
-            </button>
+            ${buttonContent}
           </div>
         `;
       });
@@ -2521,6 +2537,11 @@
       container.querySelectorAll('.btn-upgrade-stat').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const statKey = btn.dataset.stat;
+          const currentStats = getEffectiveStats();
+          if (statKey === 'critRate' && currentStats.critRate >= 100) {
+            displayToast('치명타 확률이 이미 최대치(100%)에 도달했습니다.');
+            return;
+          }
           const cost = parseFloat(btn.dataset.cost);
           if (game.gold >= cost) {
             game.gold -= cost;
@@ -2591,12 +2612,12 @@
           mult: 1.55,
           getDesc: (lvl) => {
             const spd = 50 + lvl * 10;
-            const crit = 25 + lvl * 5;
+            const critDmg = 50 + lvl * 25;
             const atk = 10 + lvl * 5;
             const dur = (8.0 + Math.min(6.0, lvl * 0.2)).toFixed(1);
             return `
-              <div>${dur}초간 폭주: <b class="text-amber-300">공속 +${spd}%</b>, <b class="text-rose-300">치명타 +${crit}%</b>, <b class="text-cyan-300">공격력 +${atk}%</b></div>
-              <div class="text-[9px] text-slate-400 mt-0.5">다음 Lv.${lvl + 1}: <span class="text-emerald-400">공속 +${spd + 10}%, 치명타 +${crit + 5}%, 공격력 +${atk + 5}%</span></div>
+              <div>${dur}초간 폭주: <b class="text-amber-300">공속 +${spd}%</b>, <b class="text-rose-300">치명타 피해 +${critDmg}%</b>, <b class="text-cyan-300">공격력 +${atk}%</b></div>
+              <div class="text-[9px] text-slate-400 mt-0.5">다음 Lv.${lvl + 1}: <span class="text-emerald-400">공속 +${spd + 10}%, 치명타 피해 +${critDmg + 25}%, 공격력 +${atk + 5}%</span></div>
             `;
           }
         },
