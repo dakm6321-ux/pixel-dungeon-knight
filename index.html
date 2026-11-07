@@ -610,6 +610,23 @@
         </div>
       </div>
 
+      <!-- Transcendent Awakening Box (Tier 7 초월 장비 전용 각성 시스템) -->
+      <div id="detailAwakeningBox" class="hidden bg-[#180f2d] p-2.5 rounded border border-cyan-500/50 flex flex-col gap-1.5 text-xs">
+        <div class="flex justify-between items-center font-bold">
+          <span class="text-cyan-300 flex items-center gap-1">
+            <span class="text-yellow-300 animate-pulse">✨</span> 초월 각성: <span id="detailAwakeBadge" class="text-yellow-400">0각성</span>
+          </span>
+          <span id="detailAwakeBuffText" class="text-[10px] text-emerald-400 font-mono">+0% 스텟 증폭</span>
+        </div>
+        <div class="text-[10px] text-slate-300 flex justify-between items-center bg-[#100a20] px-2 py-1 rounded border border-[#2c1d47]">
+          <span>필요 재물: 동일한 초월 장비 <b id="detailAwakeReqCount" class="text-yellow-300 font-mono">1개</b></span>
+          <span>보유: <b id="detailAwakeAvailCount" class="text-cyan-300 font-mono">0개</b></span>
+        </div>
+        <button id="btnAwakenItem" class="pixel-btn w-full bg-gradient-to-r from-purple-700 via-pink-600 to-amber-500 hover:from-purple-600 hover:to-amber-400 text-white font-extrabold text-xs py-1.5 rounded shadow-lg flex items-center justify-center gap-1">
+          ✨ 1각성 진행하기
+        </button>
+      </div>
+
       <div class="grid grid-cols-2 gap-2 pt-1 text-xs">
         <button id="btnUpgradeItem" class="pixel-btn bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold py-2 rounded flex flex-col items-center">
           <span id="txtUpgradeBtnLabel">강화하기</span>
@@ -1310,27 +1327,31 @@
       let baseCritDmg = 150 + (game.stats.critDmg - 1) * 4; // %
       let baseAtkSpeed = 1.0 + (game.stats.atkSpeed - 1) * 0.03; // attacks per sec
 
-      // 2. Equipment Bonuses
+      // 2. Equipment Bonuses (Tier Multiplier * Awakening Multiplier * Upgrade Level)
       if (game.equipped.weapon) {
         const wTier = TIERS[game.equipped.weapon.tier - 1];
         const wLvl = game.equipped.weapon.level;
-        baseAtk += (15 * wTier.multiplier) * (1 + wLvl * 0.15);
+        const wAwakeMult = 1 + (game.equipped.weapon.awake || 0) * 0.5; // +50% per awakening!
+        baseAtk += (15 * wTier.multiplier * wAwakeMult) * (1 + wLvl * 0.15);
       }
       if (game.equipped.armor) {
         const aTier = TIERS[game.equipped.armor.tier - 1];
         const aLvl = game.equipped.armor.level;
-        baseMaxHp += (80 * aTier.multiplier) * (1 + aLvl * 0.15);
+        const aAwakeMult = 1 + (game.equipped.armor.awake || 0) * 0.5;
+        baseMaxHp += (80 * aTier.multiplier * aAwakeMult) * (1 + aLvl * 0.15);
       }
       if (game.equipped.helmet) {
         const hTier = TIERS[game.equipped.helmet.tier - 1];
         const hLvl = game.equipped.helmet.level;
-        baseRegen += (4 * hTier.multiplier) * (1 + hLvl * 0.15);
+        const hAwakeMult = 1 + (game.equipped.helmet.awake || 0) * 0.5;
+        baseRegen += (4 * hTier.multiplier * hAwakeMult) * (1 + hLvl * 0.15);
       }
       if (game.equipped.ring) {
         const rTier = TIERS[game.equipped.ring.tier - 1];
         const rLvl = game.equipped.ring.level;
-        baseCritDmg += (20 * rTier.multiplier) * (1 + rLvl * 0.15);
-        baseCritRate += Math.min(30, (2.5 * rTier.multiplier));
+        const rAwakeMult = 1 + (game.equipped.ring.awake || 0) * 0.5;
+        baseCritDmg += (20 * rTier.multiplier * rAwakeMult) * (1 + rLvl * 0.15);
+        baseCritRate += Math.min(30, (2.5 * rTier.multiplier * rAwakeMult));
       }
 
       // Berserk active buff (Boosts AtkSpeed, CRIT DMG, and Attack power!)
@@ -2721,7 +2742,7 @@
                 style="border-color: ${tier.border};" onclick="showItemDetail('${item.id}', true)">
                 <span class="text-lg">${info.icon}</span>
                 <span class="text-[10px] font-bold truncate max-w-full" style="color: ${tier.color};">${name}</span>
-                <span class="text-[9px] text-yellow-300 font-mono">+${item.level}강화</span>
+                <span class="text-[9px] text-yellow-300 font-mono">${item.awake ? `<b class="text-cyan-300">★${item.awake}각성</b> ` : ''}+${item.level}강화</span>
               </div>
             `;
           } else {
@@ -2759,7 +2780,7 @@
                 <span class="text-base">${icon}</span>
                 <span class="text-[9px] font-bold truncate w-full text-center" style="color: ${tier.color};">${name}</span>
                 <div class="flex items-center justify-between w-full text-[8px] text-slate-400 mt-0.5">
-                  <span class="text-yellow-300">+${item.level}</span>
+                  <span class="text-yellow-300 font-mono">${item.awake ? `<b class="text-cyan-300">★${item.awake}</b> ` : ''}+${item.level}</span>
                   <span class="bg-[#241a3d] px-1 rounded text-cyan-300">x${item.count || 1}</span>
                 </div>
               </div>
@@ -2800,14 +2821,60 @@
       document.getElementById('detailItemName').style.color = tier.color;
       document.getElementById('detailItemTier').textContent = `${tier.name} 등급 ${info.name} (보유: ${item.count || 1}개)`;
 
+      // Awakening Multiplier Calculation
+      const awakeLvl = item.awake || 0;
+      const awakeMult = 1 + awakeLvl * 0.5; // +50% per awakening
+      const awakeTitle = awakeLvl > 0 ? `★${awakeLvl}각성 ` : '';
+      document.getElementById('detailItemName').textContent = `[${tier.name}] ${name} ${awakeTitle}+${item.level}강화`;
+
       // Current & Next Stat Calculation
-      const baseStatVal = (item.type === 'armor' ? 80 : 15) * tier.multiplier;
+      const baseStatVal = (item.type === 'armor' ? 80 : 15) * tier.multiplier * awakeMult;
       const currentStat = Math.floor(baseStatVal * (1 + item.level * 0.15));
       const nextStat = Math.floor(baseStatVal * (1 + (item.level + 1) * 0.15));
       const statDiff = nextStat - currentStat;
 
       document.getElementById('detailItemStats').textContent = `${info.statName} +${formatNumber(currentStat)}`;
       document.getElementById('detailNextItemStats').textContent = `${info.statName} +${formatNumber(nextStat)} (+${formatNumber(statDiff)})`;
+
+      // Transcendent Awakening Box Logic (Tier 7 Only)
+      const awakeBox = document.getElementById('detailAwakeningBox');
+      if (item.tier === 7) {
+        awakeBox.classList.remove('hidden');
+        const nextAwake = awakeLvl + 1;
+        const reqDuplicates = nextAwake; // 1각성: 1개, 2각성: 2개, 3각성: 3개...
+        const availDuplicates = getAvailableSacrifices(item, isEquipped);
+
+        document.getElementById('detailAwakeBadge').textContent = `${awakeLvl}각성`;
+        document.getElementById('detailAwakeBuffText').textContent = `+${awakeLvl * 50}% 스텟 증폭 (다음: +${nextAwake * 50}%)`;
+        document.getElementById('detailAwakeReqCount').textContent = `${reqDuplicates}개`;
+        document.getElementById('detailAwakeAvailCount').textContent = `${availDuplicates}개`;
+
+        const btnAwaken = document.getElementById('btnAwakenItem');
+        const canAwaken = (availDuplicates >= reqDuplicates);
+
+        if (canAwaken) {
+          btnAwaken.className = 'pixel-btn w-full bg-gradient-to-r from-purple-700 via-pink-600 to-amber-500 hover:from-purple-600 hover:to-amber-400 text-white font-extrabold text-xs py-1.5 rounded shadow-lg flex items-center justify-center gap-1 animate-pulse';
+          btnAwaken.innerHTML = `<span>✨</span><span>${nextAwake}각성 진행하기 (${availDuplicates}/${reqDuplicates}개 보유)</span>`;
+          btnAwaken.disabled = false;
+          btnAwaken.onclick = () => {
+            consumeSacrifices(item, isEquipped, reqDuplicates);
+            item.awake = nextAwake;
+            audio.playGachaFanfare();
+            screenShake = 12;
+            saveGame();
+            updateUI();
+            window.showItemDetail(item.id, isEquipped);
+            displayToast(`✨ [초월] ${name} ${nextAwake}각성 성공! (+${nextAwake * 50}% 스텟 대폭 증가)`);
+          };
+        } else {
+          btnAwaken.className = 'pixel-btn w-full bg-slate-800 text-slate-500 font-extrabold text-xs py-1.5 rounded flex items-center justify-center gap-1 cursor-not-allowed';
+          btnAwaken.innerHTML = `<span>🔒</span><span>재물 부족 (${availDuplicates}/${reqDuplicates}개 필요)</span>`;
+          btnAwaken.disabled = true;
+          btnAwaken.onclick = null;
+        }
+      } else {
+        awakeBox.classList.add('hidden');
+      }
 
       // Populate real-time currency display inside modal
       const modalGoldEl = document.getElementById('detailModalGold');
@@ -2883,6 +2950,45 @@
       }
     });
 
+    // Helper: Count available Tier 7 duplicate sacrifices in inventory
+    function getAvailableSacrifices(targetItem, isEquipped) {
+      let count = 0;
+      game.inventory.forEach(inv => {
+        if (inv.type === targetItem.type && inv.tier === 7) {
+          if (!isEquipped && inv.id === targetItem.id) {
+            count += Math.max(0, (inv.count || 1) - 1);
+          } else {
+            count += (inv.count || 1);
+          }
+        }
+      });
+      return count;
+    }
+
+    // Helper: Safely consume required duplicate sacrifices from inventory
+    function consumeSacrifices(targetItem, isEquipped, amountToConsume) {
+      let remaining = amountToConsume;
+      for (let i = 0; i < game.inventory.length && remaining > 0; i++) {
+        const inv = game.inventory[i];
+        if (inv.type === targetItem.type && inv.tier === 7) {
+          if (!isEquipped && inv.id === targetItem.id) {
+            const availableFromThis = Math.max(0, (inv.count || 1) - 1);
+            const take = Math.min(remaining, availableFromThis);
+            inv.count -= take;
+            remaining -= take;
+          } else {
+            const take = Math.min(remaining, inv.count || 1);
+            inv.count = (inv.count || 1) - take;
+            remaining -= take;
+            if (inv.count <= 0) {
+              game.inventory.splice(i, 1);
+              i--;
+            }
+          }
+        }
+      }
+    }
+
     // Equip specific item from inventory
     function equipSpecificGear(item) {
       const type = item.type;
@@ -2923,8 +3029,9 @@
         let bestInInv = null;
         game.inventory.forEach(invItem => {
           if (invItem.type === t) {
-            if (!bestInInv || invItem.tier > bestInInv.tier || 
-               (invItem.tier === bestInInv.tier && invItem.level > bestInInv.level)) {
+            const invScore = (invItem.tier * 1000) + ((invItem.awake || 0) * 350) + invItem.level;
+            const bestScore = bestInInv ? ((bestInInv.tier * 1000) + ((bestInInv.awake || 0) * 350) + bestInInv.level) : -1;
+            if (invScore > bestScore) {
               bestInInv = invItem;
             }
           }
@@ -2932,8 +3039,9 @@
 
         const current = game.equipped[t];
         if (bestInInv) {
-          if (!current || bestInInv.tier > current.tier || 
-             (bestInInv.tier === current.tier && bestInInv.level > current.level)) {
+          const currentScore = current ? ((current.tier * 1000) + ((current.awake || 0) * 350) + current.level) : -1;
+          const bestScore = (bestInInv.tier * 1000) + ((bestInInv.awake || 0) * 350) + bestInInv.level;
+          if (bestScore > currentScore) {
             equipSpecificGear(bestInInv);
             changed = true;
           }
@@ -2988,9 +3096,10 @@
       }
     });
 
-    // Helper: Add gear to inventory with stacking
+    // Helper: Add gear to inventory with stacking (preserves awakening level)
     function addGearToInventory(gear) {
-      const match = game.inventory.find(i => i.type === gear.type && i.tier === gear.tier && i.level === gear.level);
+      const gearAwake = gear.awake || 0;
+      const match = game.inventory.find(i => i.type === gear.type && i.tier === gear.tier && i.level === gear.level && (i.awake || 0) === gearAwake);
       if (match) {
         match.count = (match.count || 1) + 1;
       } else {
@@ -2999,6 +3108,7 @@
           type: gear.type,
           tier: gear.tier,
           level: gear.level || 0,
+          awake: gearAwake,
           count: 1,
         });
       }
