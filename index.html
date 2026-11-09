@@ -739,7 +739,7 @@
   <div id="rateInfoModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 select-none">
     <div class="pixel-box w-full max-w-xs sm:max-w-sm bg-[#1b1533] p-4 flex flex-col gap-3 border-2 border-cyan-400 shadow-2xl relative">
       <div class="flex justify-between items-center border-b border-[#362758] pb-2">
-        <h3 class="text-sm sm:text-base font-extrabold text-cyan-300 flex items-center gap-1.5">
+        <h3 id="rateModalTitle" class="text-sm sm:text-base font-extrabold text-cyan-300 flex items-center gap-1.5">
           📜 장비 소환 등급별 확률 안내
         </h3>
         <button id="btnCloseRateModal" class="text-slate-400 hover:text-white font-bold text-base px-1.5 py-0.5">✕</button>
@@ -762,7 +762,7 @@
         <!-- Rendered via JS -->
       </div>
 
-      <p class="text-[10px] text-slate-400 bg-[#120a22] p-2 rounded border border-[#261845] leading-relaxed">
+      <p id="rateModalTip" class="text-[10px] text-slate-400 bg-[#120a22] p-2 rounded border border-[#261845] leading-relaxed">
         💡 소환을 진행할수록 경험치가 누적되어 소환 레벨이 상승하며, <span class="text-yellow-300 font-bold">영웅·전설·신화·초월</span> 등급의 획득 확률이 대폭 증가합니다.
       </p>
 
@@ -3565,6 +3565,84 @@
 
     document.getElementById('btnUpgradeAllRelics').addEventListener('click', window.upgradeAllRelics);
 
+    // Track active rate modal type ('gear' | 'relic' | null) to prevent combat loop overwrite
+    let activeRateModalType = null;
+
+    function renderRateModalContent(type) {
+      if (!type) return;
+      const modal = document.getElementById('rateInfoModal');
+      if (!modal || modal.classList.contains('hidden')) return;
+
+      const rateContent = document.getElementById('rateInfoContent');
+      const rateLvlBadge = document.getElementById('rateModalLevelBadge');
+      const rateGemsBadge = document.getElementById('rateModalGemsBadge');
+      const rateTitle = document.getElementById('rateModalTitle');
+      const rateTip = document.getElementById('rateModalTip');
+
+      if (rateGemsBadge) rateGemsBadge.textContent = formatNumber(game.gems);
+
+      if (type === 'relic') {
+        const rLvl = game.relicGachaLevel || 1;
+        if (rateTitle) rateTitle.innerHTML = '🏺 유물 소환 등급별 확률 안내';
+        if (rateLvlBadge) rateLvlBadge.textContent = `유물 Lv.${rLvl}`;
+        if (rateTip) {
+          rateTip.innerHTML = '💡 유물 소환을 진행할수록 경험치가 누적되어 소환 레벨이 상승하며, <span class="text-amber-300 font-bold">희귀·영웅·전설·신화</span> 유물의 획득 확률이 대폭 증가합니다.';
+        }
+        if (rateContent) {
+          const rates = RELIC_RATES_BY_LEVEL[rLvl - 1] || RELIC_RATES_BY_LEVEL[0];
+          let rHtml = '';
+          for (let t = 3; t <= 6; t++) {
+            const tierInfo = TIERS[t - 1];
+            const rateVal = rates[`tier${t}`] || 0;
+            rHtml += `
+              <div class="pixel-box p-1.5 px-2 bg-[#140e24] flex items-center justify-between border" style="border-color: ${tierInfo.border};">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-extrabold text-xs" style="color: ${tierInfo.color};">[${tierInfo.name} 유물]</span>
+                  <span class="text-[10px] text-slate-400 font-mono">티어 ${t}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-16 h-1.5 bg-[#251b3d] rounded overflow-hidden hidden sm:block">
+                    <div class="h-full" style="width: ${Math.min(100, rateVal)}%; background-color: ${tierInfo.color};"></div>
+                  </div>
+                  <span class="font-mono font-bold text-xs" style="color: ${rateVal > 0 ? '#facc15' : '#64748b'};">${rateVal.toFixed(1)}%</span>
+                </div>
+              </div>
+            `;
+          }
+          rateContent.innerHTML = rHtml;
+        }
+      } else {
+        // Gear Gacha Rates
+        if (rateTitle) rateTitle.innerHTML = '📜 장비 소환 등급별 확률 안내';
+        if (rateLvlBadge) rateLvlBadge.textContent = `장비 Lv.${game.gachaLevel}`;
+        if (rateTip) {
+          rateTip.innerHTML = '💡 소환을 진행할수록 경험치가 누적되어 소환 레벨이 상승하며, <span class="text-yellow-300 font-bold">영웅·전설·신화·초월</span> 등급의 획득 확률이 대폭 증가합니다.';
+        }
+        if (rateContent) {
+          const rates = GACHA_RATES_BY_LEVEL[game.gachaLevel - 1] || GACHA_RATES_BY_LEVEL[0];
+          let rHtml = '';
+          TIERS.forEach(t => {
+            const rateVal = rates[`tier${t.id}`] || 0;
+            rHtml += `
+              <div class="pixel-box p-1.5 px-2 bg-[#140e24] flex items-center justify-between border" style="border-color: ${t.border};">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-extrabold text-xs" style="color: ${t.color};">[${t.name}]</span>
+                  <span class="text-[10px] text-slate-400 font-mono">티어 ${t.id}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-16 h-1.5 bg-[#251b3d] rounded overflow-hidden hidden sm:block">
+                    <div class="h-full" style="width: ${Math.min(100, rateVal)}%; background-color: ${t.color};"></div>
+                  </div>
+                  <span class="font-mono font-bold text-xs" style="color: ${rateVal > 0 ? '#facc15' : '#64748b'};">${rateVal.toFixed(1)}%</span>
+                </div>
+              </div>
+            `;
+          });
+          rateContent.innerHTML = rHtml;
+        }
+      }
+    }
+
     // GACHA / SUMMON LOGIC (Supports Gear & Relic Sub-Panes)
     function renderGachaTab() {
       // 1. Gear Gacha Level
@@ -3585,44 +3663,21 @@
       if (rExpEl) rExpEl.textContent = `${rExp} / ${rMaxExp} 회`;
       if (rBarEl) rBarEl.style.width = `${Math.min(100, (rExp / rMaxExp) * 100)}%`;
 
-      // Rate info modal content
-      const rateContent = document.getElementById('rateInfoContent');
-      const rateLvlBadge = document.getElementById('rateModalLevelBadge');
-      const rateGemsBadge = document.getElementById('rateModalGemsBadge');
-      if (rateLvlBadge) rateLvlBadge.textContent = `Lv.${game.gachaLevel}`;
-      if (rateGemsBadge) rateGemsBadge.textContent = formatNumber(game.gems);
-
-      if (rateContent) {
-        const rates = GACHA_RATES_BY_LEVEL[game.gachaLevel - 1] || GACHA_RATES_BY_LEVEL[0];
-        let rHtml = '';
-        TIERS.forEach(t => {
-          const rateVal = rates[`tier${t.id}`] || 0;
-          rHtml += `
-            <div class="pixel-box p-1.5 px-2 bg-[#140e24] flex items-center justify-between border" style="border-color: ${t.border};">
-              <div class="flex items-center gap-1.5">
-                <span class="font-extrabold text-xs" style="color: ${t.color};">[${t.name}]</span>
-                <span class="text-[10px] text-slate-400 font-mono">티어 ${t.id}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-16 h-1.5 bg-[#251b3d] rounded overflow-hidden hidden sm:block">
-                  <div class="h-full" style="width: ${Math.min(100, rateVal)}%; background-color: ${t.color};"></div>
-                </div>
-                <span class="font-mono font-bold text-xs" style="color: ${rateVal > 0 ? '#facc15' : '#64748b'};">${rateVal.toFixed(1)}%</span>
-              </div>
-            </div>
-          `;
-        });
-        rateContent.innerHTML = rHtml;
+      // Update rate info modal only if currently open
+      if (activeRateModalType) {
+        renderRateModalContent(activeRateModalType);
       }
     }
 
     function openRateModal() {
       audio.init();
-      renderGachaTab();
+      activeRateModalType = 'gear';
       document.getElementById('rateInfoModal').classList.remove('hidden');
+      renderRateModalContent('gear');
     }
 
     function closeRateModal() {
+      activeRateModalType = null;
       document.getElementById('rateInfoModal').classList.add('hidden');
     }
 
@@ -3836,37 +3891,9 @@
     // Relic Gacha Rates Modal
     function openRelicRatesModal() {
       audio.init();
-      const rLvl = game.relicGachaLevel || 1;
-      const rateContent = document.getElementById('rateInfoContent');
-      const rateLvlBadge = document.getElementById('rateModalLevelBadge');
-      const rateGemsBadge = document.getElementById('rateModalGemsBadge');
-      if (rateLvlBadge) rateLvlBadge.textContent = `유물 Lv.${rLvl}`;
-      if (rateGemsBadge) rateGemsBadge.textContent = formatNumber(game.gems);
-
-      if (rateContent) {
-        const rates = RELIC_RATES_BY_LEVEL[rLvl - 1] || RELIC_RATES_BY_LEVEL[0];
-        let rHtml = '<div class="text-[10px] text-yellow-300 font-bold mb-1">🏺 유물 소환 등급별 확률표</div>';
-        for (let t = 3; t <= 6; t++) {
-          const tierInfo = TIERS[t - 1];
-          const rateVal = rates[`tier${t}`] || 0;
-          rHtml += `
-            <div class="pixel-box p-1.5 px-2 bg-[#140e24] flex items-center justify-between border" style="border-color: ${tierInfo.border};">
-              <div class="flex items-center gap-1.5">
-                <span class="font-extrabold text-xs" style="color: ${tierInfo.color};">[${tierInfo.name} 유물]</span>
-                <span class="text-[10px] text-slate-400 font-mono">티어 ${t}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-16 h-1.5 bg-[#251b3d] rounded overflow-hidden hidden sm:block">
-                  <div class="h-full" style="width: ${Math.min(100, rateVal)}%; background-color: ${tierInfo.color};"></div>
-                </div>
-                <span class="font-mono font-bold text-xs" style="color: ${rateVal > 0 ? '#facc15' : '#64748b'};">${rateVal.toFixed(1)}%</span>
-              </div>
-            </div>
-          `;
-        }
-        rateContent.innerHTML = rHtml;
-      }
+      activeRateModalType = 'relic';
       document.getElementById('rateInfoModal').classList.remove('hidden');
+      renderRateModalContent('relic');
     }
 
     document.getElementById('btnShowRelicRates').addEventListener('click', openRelicRatesModal);
