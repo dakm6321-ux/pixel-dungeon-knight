@@ -1537,6 +1537,18 @@
         }
       }
       game.pendingStage = null;
+      // Sanitize inflated / astronomical gold caused by old 1.3^stage offline formula
+      const maxStg = Math.max(1, game.highestStage || game.stage || 1);
+      const stgFactor = maxStg - 1;
+      const stageMult = Math.pow(1.022, stgFactor) * (1 + stgFactor * 0.12);
+      const mobGold = (15 + maxStg * 6) * stageMult;
+      if (typeof game.gold !== 'number' || isNaN(game.gold) || !isFinite(game.gold) || game.gold > mobGold * 1e11) {
+        game.gold = Math.floor(mobGold * 50000);
+      }
+      if (typeof game.gems !== 'number' || isNaN(game.gems) || !isFinite(game.gems)) {
+        game.gems = 300;
+      }
+
       initDefaultGear();
     }
 
@@ -1551,8 +1563,11 @@
         const cappedSec = Math.min(elapsedSec, 8 * 3600); // Max 8 hours
         const minutes = Math.floor(cappedSec / 60);
         
-        // Reward based on current stage
-        const goldPerMin = 40 * Math.pow(1.3, game.stage - 1);
+        // Reward based on current stage (aligned with active combat monster scaling)
+        const stgFactor = Math.max(0, (game.stage || 1) - 1);
+        const stageMultiplier = Math.pow(1.022, stgFactor) * (1 + stgFactor * 0.12);
+        // ~15 monsters worth of gold per minute of offline farming
+        const goldPerMin = Math.floor((15 + (game.stage || 1) * 6) * stageMultiplier * 15);
         const earnedGold = Math.floor(minutes * goldPerMin);
         const earnedGems = Math.floor(minutes * 0.5);
 
@@ -2297,11 +2312,20 @@
           relicGemMult += 0.01 + (game.relics.relic_gem_compass.level - 1) * 0.01;
         }
       }
-      const finalGoldReward = Math.floor(m.goldReward * relicGoldMult);
-      const finalGemReward = m.gemReward > 0 ? Math.floor(m.gemReward * relicGemMult) : 0;
+      const rawGold = (m.goldReward && !isNaN(m.goldReward) && m.goldReward > 0) ? m.goldReward : 10;
+      const finalGoldReward = Math.floor(rawGold * Math.max(1.0, relicGoldMult));
+      const finalGemReward = (m.gemReward && !isNaN(m.gemReward) && m.gemReward > 0) ? Math.floor(m.gemReward * relicGemMult) : 0;
 
-      game.gold += finalGoldReward;
-      if (finalGemReward > 0) game.gems += finalGemReward;
+      if (typeof game.gold !== 'number' || isNaN(game.gold) || !isFinite(game.gold)) {
+        game.gold = finalGoldReward;
+      } else {
+        game.gold += finalGoldReward;
+      }
+
+      if (finalGemReward > 0) {
+        if (typeof game.gems !== 'number' || isNaN(game.gems)) game.gems = finalGemReward;
+        else game.gems += finalGemReward;
+      }
       game.totalKills++;
 
       // Death explosion particles
