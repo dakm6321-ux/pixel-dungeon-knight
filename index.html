@@ -2395,7 +2395,7 @@
     function gameLoop(timestamp) {
       const rawDt = (timestamp - lastTimestamp) / 1000;
       lastTimestamp = timestamp;
-      const dt = Math.min(rawDt, 0.1) * game.gameSpeed;
+      const dt = Math.min(rawDt * game.gameSpeed, 0.25);
 
       // Only run combat and entity simulation when active in-game
       if (!isTitleScreen) {
@@ -2817,6 +2817,11 @@
         btnAutoStage.className = game.autoStage 
           ? 'pixel-btn text-[10px] px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-emerald-100 font-bold rounded'
           : 'pixel-btn text-[10px] px-2 py-1 bg-amber-700 hover:bg-amber-600 text-amber-100 font-bold rounded';
+      }
+
+      const btnSpeed = document.getElementById('btnSpeedToggle');
+      if (btnSpeed) {
+        btnSpeed.textContent = `⏩ ${game.gameSpeed}x`;
       }
 
       // 3. Render active tab view
@@ -4844,13 +4849,16 @@
       if (e.target.id === 'detailedStatsModal') closeDetailedStatsModal();
     });
 
-    // Game speed toggle (1x -> 1.5x -> 2x)
+    // Game speed toggle (1x -> 1.5x -> 2x -> 3x -> 4x -> 1x)
+    const SPEED_STEPS = [1, 1.5, 2, 3, 4];
     document.getElementById('btnSpeedToggle').addEventListener('click', () => {
-      if (game.gameSpeed === 1) game.gameSpeed = 1.5;
-      else if (game.gameSpeed === 1.5) game.gameSpeed = 2;
-      else game.gameSpeed = 1;
+      let curIdx = SPEED_STEPS.indexOf(game.gameSpeed);
+      if (curIdx === -1) curIdx = 0;
+      const nextIdx = (curIdx + 1) % SPEED_STEPS.length;
+      game.gameSpeed = SPEED_STEPS[nextIdx];
       document.getElementById('btnSpeedToggle').textContent = `⏩ ${game.gameSpeed}x`;
       displayToast(`게임 배속: ${game.gameSpeed}x`);
+      saveGame(false);
     });
 
     // Bulk upgrade stat buttons
