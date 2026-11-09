@@ -2247,7 +2247,8 @@
       });
 
       const stats = getEffectiveStats();
-      const tapDmg = Math.max(1, Math.floor(stats.atk * 0.75));
+      const speedMult = Math.max(1, game.gameSpeed || 1);
+      const tapDmg = Math.max(1, Math.floor(stats.atk * 0.75 * speedMult));
 
       if (closest) {
         applyDamageToMonster(closest, tapDmg, false);
@@ -2417,13 +2418,20 @@
     let sleepRenderThrottle = 0;
 
     function gameLoop(timestamp) {
-      const rawDt = (timestamp - lastTimestamp) / 1000;
+      const rawDt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
       lastTimestamp = timestamp;
-      const dt = Math.min(rawDt * game.gameSpeed, 0.25);
 
       // Only run combat and entity simulation when active in-game
       if (!isTitleScreen) {
-        update(dt);
+        // High-speed Sub-stepping: divide frame into discrete micro-steps
+        // This ensures 100% identical combat physics, DPS, attack counts, and skill hitboxes at 1x, 2x, 3x, and 4x!
+        const speed = Math.max(1, game.gameSpeed || 1);
+        const steps = Math.ceil(speed);
+        const subDt = (rawDt * speed) / steps;
+        for (let s = 0; s < steps; s++) {
+          update(subDt);
+          if (isTitleScreen) break;
+        }
       }
 
       // If in sleep mode, throttle rendering to 15 FPS to save battery & prevent burn-in
@@ -2493,7 +2501,7 @@
         } else {
           // Within attack range -> Auto Attack
           if (hero.attackTimer <= 0) {
-            hero.attackDuration = Math.max(0.18, 1.0 / stats.atkSpeed);
+            hero.attackDuration = Math.max(0.08, 1.0 / stats.atkSpeed);
             hero.attackTimer = hero.attackDuration;
             const isCrit = Math.random() * 100 < stats.critRate;
             const critMult = isCrit ? stats.critDmg / 100 : 1.0;
