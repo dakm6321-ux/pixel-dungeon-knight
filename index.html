@@ -1176,10 +1176,10 @@
         icon: '🏆',
         tier: 4, // 영웅
         optionName: '골드 획득량 증가',
-        baseBuff: 30, // +30%
-        perLevel: 20, // +20%
-        getDesc: (lvl) => `몬스터 처치 시 골드 획득량 +${30 + (lvl - 1) * 20}% 영구 증가`,
-        getNextDesc: (lvl) => `골드 획득량 +${30 + lvl * 20}% (+20%)`,
+        baseBuff: 10, // +10% (1렙 시작)
+        perLevel: 2,  // +2% (1업당 추가)
+        getDesc: (lvl) => `몬스터 처치 시 골드 획득량 +${10 + (lvl - 1) * 2}% 영구 증가`,
+        getNextDesc: (lvl) => `골드 획득량 +${10 + lvl * 2}% (+2%)`,
       },
       {
         key: 'relic_gem_compass',
@@ -1187,10 +1187,10 @@
         icon: '🧭',
         tier: 5, // 전설
         optionName: '보석 획득량 증가',
-        baseBuff: 10, // +10% (1렙 시작)
-        perLevel: 2,  // +2% (1업당)
-        getDesc: (lvl) => `보스 처치 시 보석 획득량 +${10 + (lvl - 1) * 2}% 영구 증가`,
-        getNextDesc: (lvl) => `보석 획득량 +${10 + lvl * 2}% (+2%)`,
+        baseBuff: 1, // +1% (1렙 시작)
+        perLevel: 1, // +1% (1업당 추가)
+        getDesc: (lvl) => `보스 처치 시 보석 획득량 +${1 + (lvl - 1) * 1}% 영구 증가`,
+        getNextDesc: (lvl) => `보석 획득량 +${1 + lvl * 1}% (+1%)`,
       },
       {
         key: 'relic_hermes_wing',
@@ -2249,10 +2249,10 @@
       let relicGemMult = 1.0;
       if (game.relics) {
         if (game.relics.relic_midas_cup && game.relics.relic_midas_cup.level > 0) {
-          relicGoldMult += 0.30 + (game.relics.relic_midas_cup.level - 1) * 0.20;
+          relicGoldMult += 0.10 + (game.relics.relic_midas_cup.level - 1) * 0.02;
         }
         if (game.relics.relic_gem_compass && game.relics.relic_gem_compass.level > 0) {
-          relicGemMult += 0.10 + (game.relics.relic_gem_compass.level - 1) * 0.02;
+          relicGemMult += 0.01 + (game.relics.relic_gem_compass.level - 1) * 0.01;
         }
       }
       const finalGoldReward = Math.floor(m.goldReward * relicGoldMult);
