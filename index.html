@@ -929,7 +929,7 @@
     <div class="pixel-box w-full max-w-md bg-[#18122d] p-3 sm:p-4 flex flex-col gap-2.5 border-yellow-500 shadow-2xl max-h-[90vh]">
       <div class="flex justify-between items-center border-b border-[#362758] pb-1.5">
         <h3 class="text-sm sm:text-base font-extrabold text-yellow-300 flex items-center gap-1.5">
-          🗺️ 전체 스테이지 탐색 (1 ~ 1000)
+          🗺️ 전체 스테이지 탐색 (1 ~ 5000)
         </h3>
         <button id="btnCloseStageModal" class="text-slate-400 hover:text-white font-bold px-1.5 text-base">✕</button>
       </div>
@@ -937,10 +937,10 @@
       <!-- Current / Highest Info -->
       <div class="flex justify-between items-center bg-[#100a20] px-2.5 py-1.5 rounded border border-[#2b1f47] text-[11px]">
         <span class="text-slate-300">현재: <b id="stageModalCurrentName" class="text-yellow-400">STAGE 1</b></span>
-        <span class="text-slate-300">최고: <b id="stageModalHighestBadge" class="text-cyan-400 font-mono">STAGE 1 / 1000</b></span>
+        <span class="text-slate-300">최고: <b id="stageModalHighestBadge" class="text-cyan-400 font-mono">STAGE 1 / 5000</b></span>
       </div>
 
-      <!-- Region Selector Bar (20 Regions, 50 Stages Each) -->
+      <!-- Region Selector Bar (50 Regions, 100 Stages Each) -->
       <div class="flex items-center justify-between gap-1 bg-[#150f29] p-1.5 rounded border border-[#372759]">
         <button id="btnPrevRegion" class="pixel-btn px-2 py-1 text-xs text-yellow-300 font-bold bg-[#2e1d52] hover:bg-[#432a75] rounded shrink-0">◀</button>
         <select id="selStageRegion" class="bg-[#20153b] text-yellow-300 text-xs font-bold py-1 px-1.5 rounded border border-[#483375] focus:outline-none cursor-pointer flex-1 text-center truncate">
@@ -959,7 +959,7 @@
         </button>
       </div>
 
-      <!-- Scrollable Stage Cards Grid (50 per region for high performance) -->
+      <!-- Scrollable Stage Cards Grid (100 per region for high performance) -->
       <div id="stageListContainer" class="flex flex-col gap-1.5 overflow-y-auto max-h-[340px] p-1 pr-1.5">
         <!-- Rendered dynamically via JS -->
       </div>
@@ -1266,44 +1266,75 @@
     ];
     const GACHA_EXP_TABLE = [50, 120, 250, 450, 750, 1200, 1800, 2600, 3600, 5000];
 
-    const MAX_GAME_STAGE = 1000;
+    const MAX_GAME_STAGE = 5000;
+    const STAGES_PER_REGION = 100;
 
-    // 20 Epic Dungeon Regions spanning 1000 Stages (50 stages per region)
+    // 50 Epic Dungeon Regions spanning 5000 Stages (100 stages per region)
     const REGION_THEMES = [
-      { id: 1, name: '슬라임 초원', icon: '🟢', range: '1~50', desc: '초보 용사들이 기초 수련을 하는 평화로운 초원', baseType: 'slime', colors: { body: '#22c55e', dark: '#15803d', bossBody: '#a855f7', bossDark: '#7e22ce' }, prefixes: ['숲의', '야생', '초원', '새싹', '거대'], bossPrefix: '대왕 슬라임' },
-      { id: 2, name: '고블린 지하동굴', icon: '👺', range: '51~100', desc: '도적 고블린 무리가 보물을 숨겨둔 암흑 동굴', baseType: 'goblin', colors: { skin: '#65a30d', clothes: '#78350f', bossBody: '#dc2626' }, prefixes: ['동굴', '도적', '정예', '붉은눈', '단도'], bossPrefix: '고블린 대족장' },
-      { id: 3, name: '해골 지하묘지', icon: '💀', range: '101~150', desc: '망령과 언데드 병사들이 잠들어 있는 고대 묘지', baseType: 'skeleton', colors: { bone: '#e2e8f0', dark: '#334155', bossBody: '#64748b' }, prefixes: ['망령', '흑마법', '해골', '부활한', '저주받은'], bossPrefix: '불멸의 리치왕' },
-      { id: 4, name: '오크 산적요새', icon: '👹', range: '151~200', desc: '괴력의 오크 전사들이 세운 난공불락의 산적 요새', baseType: 'orc', colors: { skin: '#4d7c0f', clothes: '#573010', bossBody: '#b91c1c' }, prefixes: ['철퇴', '광전사', '흉포한', '정예', '바위'], bossPrefix: '오크 파괴군주' },
-      { id: 5, name: '원혼의 늪지대', icon: '👻', range: '201~250', desc: '독기와 안개로 가득 찬 원혼들의 저주받은 늪', baseType: 'wraith', colors: { body: '#818cf8', dark: '#312e81', glow: '#38bdf8' }, prefixes: ['원혼', '독안개', '방황하는', '심연', '유령'], bossPrefix: '심연의 원혼제왕' },
-      { id: 6, name: '타락한 암흑 기사성', icon: '🏰', range: '251~300', desc: '마왕의 마기에 타락한 고대 성기사들의 요새', baseType: 'knight', colors: { body: '#334155', dark: '#0f172a', trim: '#f43f5e' }, prefixes: ['타락한', '암흑', '파계', '피의', '칠흑'], bossPrefix: '타락 성기사단장' },
-      { id: 7, name: '화염 골렘 신전', icon: '🌋', range: '301~350', desc: '끓어오르는 용암 속에 잠들어 있는 화염 골렘', baseType: 'golem', colors: { body: '#ea580c', dark: '#7c2d12', core: '#facc15' }, prefixes: ['용암', '화염', '불꽃', '마그마', '작열'], bossPrefix: '용암 골렘왕 이그니스' },
-      { id: 8, name: '얼어붙은 빙하 절벽', icon: '❄️', range: '351~400', desc: '영구 동토층에 서식하는 냉기 마수들의 서식지', baseType: 'goblin', colors: { skin: '#38bdf8', clothes: '#0369a1', bossBody: '#0284c7' }, prefixes: ['혹한', '절대영도', '서리', '눈보라', '빙결'], bossPrefix: '설산의 빙룡왕' },
-      { id: 9, name: '사막의 황금 피라미드', icon: '🏺', range: '401~450', desc: '고대 파라오와 저주받은 미라들의 모래 미궁', baseType: 'skeleton', colors: { bone: '#fef08a', dark: '#854d0e', bossBody: '#eab308' }, prefixes: ['황금', '미라', '모래폭풍', '파라오', '영겁'], bossPrefix: '고대 황금수호신' },
-      { id: 10, name: '심연의 마왕성 외곽', icon: '🚪', range: '451~500', desc: '마계의 군단이 집결하는 마왕성의 거대한 입구', baseType: 'demon', colors: { body: '#dc2626', dark: '#450a0a', horn: '#f59e0b' }, prefixes: ['지옥', '심연', '악마', '마계', '파멸'], bossPrefix: '마계 1군단장 벨리알' },
-      { id: 11, name: '공허의 차원 균열', icon: '🌌', range: '501~550', desc: '시공간이 붕괴되어 공허의 괴수들이 쏟아지는 균열', baseType: 'wraith', colors: { body: '#c084fc', dark: '#581c87', glow: '#ec4899' }, prefixes: ['공허', '차원', '균열', '암흑물질', '이계'], bossPrefix: '공허의 파식자' },
-      { id: 12, name: '비룡의 안식처', icon: '🐉', range: '551~600', desc: '하늘을 지배하는 고대 와이번과 드레이크의 산맥', baseType: 'dragon', colors: { body: '#b91c1c', dark: '#450a0a', horn: '#facc15' }, prefixes: ['비룡', '드레이크', '용혈', '뇌룡', '폭풍'], bossPrefix: '흑룡왕 카라시스' },
-      { id: 13, name: '기계 드워프 유적', icon: '⚙️', range: '601~650', desc: '고대 마도 공학으로 움직이는 불멸의 기계 병기들', baseType: 'golem', colors: { body: '#94a3b8', dark: '#334155', core: '#38bdf8' }, prefixes: ['강철', '태엽', '증기', '마도기계', '합금'], bossPrefix: '기계거신 오메가' },
-      { id: 14, name: '천상 타락의 신전', icon: '🪽', range: '651~700', desc: '타락한 천사들과 왜곡된 신성 마법이 흐르는 성역', baseType: 'knight', colors: { body: '#f8fafc', dark: '#475569', trim: '#a855f7' }, prefixes: ['타락천사', '심판', '단죄', '혼돈', '광휘'], bossPrefix: '타락대천사 루시페르' },
-      { id: 15, name: '마계 결사대 회랑', icon: '🩸', range: '701~750', desc: '마왕의 직속 결사대와 흡혈 귀족들이 도사리는 회랑', baseType: 'demon', colors: { body: '#991b1b', dark: '#18181b', horn: '#ef4444' }, prefixes: ['흡혈', '진홍', '선혈', '결사대', '어둠'], bossPrefix: '진홍의 혈마왕' },
-      { id: 16, name: '심연의 마왕성 옥좌', icon: '👑', range: '751~800', desc: '도트 대륙을 저주에 빠뜨린 마왕 바알의 본거지', baseType: 'demon', colors: { body: '#7f1d1d', dark: '#09090b', horn: '#ffd700' }, prefixes: ['마왕직속', '파천', '종말', '재앙', '마황'], bossPrefix: '최종 마왕 바알 1세' },
-      { id: 17, name: '시공간의 틈새', icon: '⏳', range: '801~850', desc: '과거와 미래가 뒤엉킨 초차원 시간의 회랑', baseType: 'wraith', colors: { body: '#22d3ee', dark: '#083344', glow: '#f43f5e' }, prefixes: ['시간왜곡', '영겁', '크로노스', '시공', '초월'], bossPrefix: '시간의 지배자 크로노' },
-      { id: 18, name: '원초의 혼돈 영역', icon: '👁️', range: '851~900', desc: '세계가 창조되기 이전의 원초적 어둠이 살아 숨쉬는 곳', baseType: 'orc', colors: { skin: '#3b0764', clothes: '#1e1b4b', bossBody: '#701a75' }, prefixes: ['원초', '카오스', '혼돈', '공포', '무저갱'], bossPrefix: '태초의 마신 아자토스' },
-      { id: 19, name: '신들의 시험의 제단', icon: '⚡', range: '901~950', desc: '진정한 초월 용사만이 발을 들일 수 있는 신들의 시험장', baseType: 'knight', colors: { body: '#fef08a', dark: '#713f12', trim: '#38bdf8' }, prefixes: ['신성', '발키리', '천명', '신화', '궁극'], bossPrefix: '신벌의 재판관 미카엘' },
-      { id: 20, name: '우주의 끝: 종말의 특이점', icon: '🪐', range: '951~1000', desc: '모든 물질과 빛마저 흡수하는 1000층 최후의 특이점', baseType: 'dragon', colors: { body: '#4c0519', dark: '#030712', horn: '#38bdf8' }, prefixes: ['성간', '특이점', '블랙홀', '종말', '우주'], bossPrefix: '종말의 창조신 제노스' }
+      { id: 1, name: '슬라임 초원', icon: '🟢', range: '1~100', desc: '초보 용사들이 기초 수련을 하는 평화로운 초원', baseType: 'slime', colors: { body: '#22c55e', dark: '#15803d', bossBody: '#a855f7', bossDark: '#7e22ce' }, prefixes: ['숲의', '야생', '초원', '새싹', '거대'], bossPrefix: '대왕 슬라임' },
+      { id: 2, name: '고블린 지하동굴', icon: '👺', range: '101~200', desc: '도적 고블린 무리가 보물을 숨겨둔 암흑 동굴', baseType: 'goblin', colors: { skin: '#65a30d', clothes: '#78350f', bossBody: '#dc2626' }, prefixes: ['동굴', '도적', '정예', '붉은눈', '단도'], bossPrefix: '고블린 대족장' },
+      { id: 3, name: '해골 지하묘지', icon: '💀', range: '201~300', desc: '망령과 언데드 병사들이 잠들어 있는 고대 묘지', baseType: 'skeleton', colors: { bone: '#e2e8f0', dark: '#334155', bossBody: '#64748b' }, prefixes: ['망령', '흑마법', '해골', '부활한', '저주받은'], bossPrefix: '불멸의 리치왕' },
+      { id: 4, name: '오크 산적요새', icon: '👹', range: '301~400', desc: '괴력의 오크 전사들이 세운 난공불락의 산적 요새', baseType: 'orc', colors: { skin: '#4d7c0f', clothes: '#573010', bossBody: '#b91c1c' }, prefixes: ['철퇴', '광전사', '흉포한', '정예', '바위'], bossPrefix: '오크 파괴군주' },
+      { id: 5, name: '원혼의 늪지대', icon: '👻', range: '401~500', desc: '독기와 안개로 가득 찬 원혼들의 저주받은 늪', baseType: 'wraith', colors: { body: '#818cf8', dark: '#312e81', glow: '#38bdf8' }, prefixes: ['원혼', '독안개', '방황하는', '심연', '유령'], bossPrefix: '심연의 원혼제왕' },
+      { id: 6, name: '타락한 암흑 기사성', icon: '🏰', range: '501~600', desc: '마왕의 마기에 타락한 고대 성기사들의 요새', baseType: 'knight', colors: { body: '#334155', dark: '#0f172a', trim: '#f43f5e' }, prefixes: ['타락한', '암흑', '파계', '피의', '칠흑'], bossPrefix: '타락 성기사단장' },
+      { id: 7, name: '화염 골렘 신전', icon: '🌋', range: '601~700', desc: '끓어오르는 용암 속에 잠들어 있는 화염 골렘', baseType: 'golem', colors: { body: '#ea580c', dark: '#7c2d12', core: '#facc15' }, prefixes: ['용암', '화염', '불꽃', '마그마', '작열'], bossPrefix: '용암 골렘왕 이그니스' },
+      { id: 8, name: '얼어붙은 빙하 절벽', icon: '❄️', range: '701~800', desc: '영구 동토층에 서식하는 냉기 마수들의 서식지', baseType: 'goblin', colors: { skin: '#38bdf8', clothes: '#0369a1', bossBody: '#0284c7' }, prefixes: ['혹한', '절대영도', '서리', '눈보라', '빙결'], bossPrefix: '설산의 빙룡왕' },
+      { id: 9, name: '사막의 황금 피라미드', icon: '🏺', range: '801~900', desc: '고대 파라오와 저주받은 미라들의 모래 미궁', baseType: 'skeleton', colors: { bone: '#fef08a', dark: '#854d0e', bossBody: '#eab308' }, prefixes: ['황금', '미라', '모래폭풍', '파라오', '영겁'], bossPrefix: '고대 황금수호신' },
+      { id: 10, name: '심연의 마왕성 외곽', icon: '🚪', range: '901~1000', desc: '마계의 군단이 집결하는 마왕성의 거대한 입구', baseType: 'demon', colors: { body: '#dc2626', dark: '#450a0a', horn: '#f59e0b' }, prefixes: ['지옥', '심연', '악마', '마계', '파멸'], bossPrefix: '마계 1군단장 벨리알' },
+      { id: 11, name: '공허의 차원 균열', icon: '🌌', range: '1001~1100', desc: '시공간이 붕괴되어 공허의 괴수들이 쏟아지는 균열', baseType: 'wraith', colors: { body: '#c084fc', dark: '#581c87', glow: '#ec4899' }, prefixes: ['공허', '차원', '균열', '암흑물질', '이계'], bossPrefix: '공허의 포식자' },
+      { id: 12, name: '비룡의 안식처', icon: '🐉', range: '1101~1200', desc: '하늘을 지배하는 고대 와이번과 드레이크의 산맥', baseType: 'dragon', colors: { body: '#b91c1c', dark: '#450a0a', horn: '#facc15' }, prefixes: ['비룡', '드레이크', '용혈', '뇌룡', '폭풍'], bossPrefix: '흑룡왕 카라시스' },
+      { id: 13, name: '기계 드워프 유적', icon: '⚙️', range: '1201~1300', desc: '고대 마도 공학으로 움직이는 불멸의 기계 병기들', baseType: 'golem', colors: { body: '#94a3b8', dark: '#334155', core: '#38bdf8' }, prefixes: ['강철', '태엽', '증기', '마도기계', '합금'], bossPrefix: '기계거신 오메가' },
+      { id: 14, name: '천상 타락의 신전', icon: '🪽', range: '1301~1400', desc: '타락한 천사들과 왜곡된 신성 마법이 흐르는 성역', baseType: 'knight', colors: { body: '#f8fafc', dark: '#475569', trim: '#a855f7' }, prefixes: ['타락천사', '심판', '단죄', '혼돈', '광휘'], bossPrefix: '타락대천사 루시페르' },
+      { id: 15, name: '마계 결사대 회랑', icon: '🩸', range: '1401~1500', desc: '마왕의 직속 결사대와 흡혈 귀족들이 도사리는 회랑', baseType: 'demon', colors: { body: '#991b1b', dark: '#18181b', horn: '#ef4444' }, prefixes: ['흡혈', '진홍', '선혈', '결사대', '어둠'], bossPrefix: '진홍의 혈마왕' },
+      { id: 16, name: '심연의 마왕성 옥좌', icon: '👑', range: '1501~1600', desc: '도트 대륙을 저주에 빠뜨린 마왕 바알의 본거지', baseType: 'demon', colors: { body: '#7f1d1d', dark: '#09090b', horn: '#ffd700' }, prefixes: ['마왕직속', '파천', '종말', '재앙', '마황'], bossPrefix: '최종 마왕 바알 1세' },
+      { id: 17, name: '시공간의 틈새', icon: '⏳', range: '1601~1700', desc: '과거와 미래가 뒤엉킨 초차원 시간의 회랑', baseType: 'wraith', colors: { body: '#22d3ee', dark: '#083344', glow: '#f43f5e' }, prefixes: ['시간왜곡', '영겁', '크로노스', '시공', '초월'], bossPrefix: '시간의 지배자 크로노' },
+      { id: 18, name: '원초의 혼돈 영역', icon: '👁️', range: '1701~1800', desc: '세계가 창조되기 이전의 원초적 어둠이 살아 숨쉬는 곳', baseType: 'orc', colors: { skin: '#3b0764', clothes: '#1e1b4b', bossBody: '#701a75' }, prefixes: ['원초', '카오스', '혼돈', '공포', '무저갱'], bossPrefix: '태초의 마신 아자토스' },
+      { id: 19, name: '신들의 시험 제단', icon: '⚡', range: '1801~1900', desc: '진정한 초월 용사만이 발을 들일 수 있는 신들의 시험장', baseType: 'knight', colors: { body: '#fef08a', dark: '#713f12', trim: '#38bdf8' }, prefixes: ['신성', '발키리', '천명', '신화', '궁극'], bossPrefix: '신벌의 재판관 미카엘' },
+      { id: 20, name: '우주의 끝 특이점', icon: '🪐', range: '1901~2000', desc: '모든 물질과 빛마저 흡수하는 최후의 우주 특이점', baseType: 'dragon', colors: { body: '#4c0519', dark: '#030712', horn: '#38bdf8' }, prefixes: ['성간', '특이점', '블랙홀', '종말', '우주'], bossPrefix: '종말의 창조신 제노스' },
+      { id: 21, name: '성운의 별빛 요람', icon: '✨', range: '2001~2100', desc: '초신성의 잔해에서 태어난 순수한 별빛 원소의 안식처', baseType: 'slime', colors: { body: '#38bdf8', dark: '#0284c7', bossBody: '#818cf8', bossDark: '#4338ca' }, prefixes: ['별빛', '성운', '에테르', '광휘', '유성'], bossPrefix: '성간 성운의 모체' },
+      { id: 22, name: '비취빛 수정 동굴', icon: '💎', range: '2101~2200', desc: '마력의 파동이 응축되어 결정화된 고대 수정 광맥', baseType: 'golem', colors: { body: '#10b981', dark: '#064e3b', core: '#6ee7b7' }, prefixes: ['수정', '비취', '공명', '경화', '마석'], bossPrefix: '수정 수호거신 크리스탈' },
+      { id: 23, name: '환영의 안개 숲', icon: '🌫️', range: '2201~2300', desc: '현실과 환각의 경계가 무너진 끝없는 안개 숲', baseType: 'wraith', colors: { body: '#94a3b8', dark: '#475569', glow: '#cbd5e1' }, prefixes: ['신기루', '환영', '미혹', '그림자', '몽환'], bossPrefix: '환영의 여왕 미리엘' },
+      { id: 24, name: '진홍빛 혈풍 사막', icon: '🌪️', range: '2301~2400', desc: '붉은 모래폭풍이 용사의 살점을 파고드는 잔혹한 불모지', baseType: 'goblin', colors: { skin: '#e11d48', clothes: '#881337', bossBody: '#9f1239' }, prefixes: ['혈풍', '모래칼날', '살기', '갈증', '적색'], bossPrefix: '혈풍의 암살왕 자칼' },
+      { id: 25, name: '천공의 부유 제도', icon: '🏝️', range: '2401~2500', desc: '구름 위에 떠 있는 고대 공중 도시의 방어 유적', baseType: 'knight', colors: { body: '#e0f2fe', dark: '#0369a1', trim: '#f59e0b' }, prefixes: ['비행', '천공', '부유', '질풍', '하늘'], bossPrefix: '천공 수호대장 에어로스' },
+      { id: 26, name: '흑요석 마그마 분화구', icon: '🌋', range: '2501~2600', desc: '행성의 내핵과 맞닿아 있는 끝없는 흑요석 용암 바다', baseType: 'golem', colors: { body: '#18181b', dark: '#09090b', core: '#ef4444' }, prefixes: ['흑요석', '초고열', '열핵', '분출', '화쇄류'], bossPrefix: '흑요석 거신 볼카누스' },
+      { id: 27, name: '망각의 고대 도서관', icon: '📜', range: '2601~2700', desc: '잊혀진 세계의 모든 금기 주문과 역사가 잠든 서고', baseType: 'skeleton', colors: { bone: '#cbd5e1', dark: '#1e293b', bossBody: '#475569' }, prefixes: ['망각', '금서', '지식', '봉인', '서약'], bossPrefix: '금서의 대마도사 니벨룽' },
+      { id: 28, name: '용의 심장 제단', icon: '🐲', range: '2701~2800', desc: '모든 드래곤의 시조가 잠들어 있는 붉은 용암 제단', baseType: 'dragon', colors: { body: '#dc2626', dark: '#7f1d1d', horn: '#f59e0b' }, prefixes: ['용심', '화염숨결', '원초룡', '군림', '역린'], bossPrefix: '고룡황 이그나르' },
+      { id: 29, name: '그림자 암살자 결계', icon: '🗡️', range: '2801~2900', desc: '빛이 도달하지 못하는 영구적인 그림자 차원의 암살 본거지', baseType: 'wraith', colors: { body: '#475569', dark: '#0f172a', glow: '#a855f7' }, prefixes: ['그림자', '암영', '은신', '칠흑', '배후'], bossPrefix: '그림자 군주 섀도우팽' },
+      { id: 30, name: '빛의 대성당 지성소', icon: '🕯️', range: '2901~3000', desc: '절대적인 정화의 빛으로 침입자를 불태우는 신성 영역', baseType: 'knight', colors: { body: '#fef9c3', dark: '#854d0e', trim: '#38bdf8' }, prefixes: ['신광', '절대정화', '성휘', '성흔', '축복'], bossPrefix: '지성소의 대천벌관 우리엘' },
+      { id: 31, name: '뫼비우스 나선 회랑', icon: '🌀', range: '3001~3100', desc: '시작과 끝이 연결되어 영원히 벗어날 수 없는 나선 회랑', baseType: 'orc', colors: { skin: '#1e1b4b', clothes: '#312e81', bossBody: '#4338ca' }, prefixes: ['뫼비우스', '무한루프', '나선', '왜곡', '반전'], bossPrefix: '나선 왜곡자 우로보로스' },
+      { id: 32, name: '영겁의 동결 바다', icon: '🧊', range: '3101~3200', desc: '생명의 맥박마저 얼려버리는 극한의 절대영도 빙해', baseType: 'slime', colors: { body: '#67e8f9', dark: '#0e7490', bossBody: '#06b6d4', bossDark: '#164e63' }, prefixes: ['영하', '빙정', '한기', '동면', '유빙'], bossPrefix: '동결해의 지배자 요툰' },
+      { id: 33, name: '심연의 나락 계곡', icon: '🕳️', range: '3201~3300', desc: '끝없이 떨어지는 암흑의 낭떠러지와 악마들의 소굴', baseType: 'demon', colors: { body: '#450a0a', dark: '#1c1917', horn: '#dc2626' }, prefixes: ['나락', '추락', '심연', '무저', '절망'], bossPrefix: '나락의 지배귀 압돈' },
+      { id: 34, name: '황혼의 발할라 전장', icon: '⚔️', range: '3301~3400', desc: '죽지 않는 영웅들의 영혼이 끝없는 전쟁을 치르는 성역', baseType: 'knight', colors: { body: '#fde047', dark: '#78350f', trim: '#b91c1c' }, prefixes: ['발할라', '전혼', '영웅', '불굴', '투혼'], bossPrefix: '영웅왕 길가메쉬' },
+      { id: 35, name: '카오스 마력 소용돌이', icon: '🔮', range: '3401~3500', desc: '원초 마력이 제어되지 않고 폭주하는 위험천만한 폭풍지대', baseType: 'wraith', colors: { body: '#d946ef', dark: '#701a75', glow: '#f472b6' }, prefixes: ['마력폭풍', '카오스', '과부하', '변이', '격류'], bossPrefix: '카오스 직조자 에레보스' },
+      { id: 36, name: '신화의 거인 고원', icon: '🗿', range: '3501~3600', desc: '산맥을 들어올리는 거인들이 서식하는 태고의 고원', baseType: 'golem', colors: { body: '#78716c', dark: '#292524', core: '#f97316' }, prefixes: ['티탄', '태고', '대지흔들', '거석', '괴력'], bossPrefix: '티탄의 거신 아틀라스' },
+      { id: 37, name: '차원 침식의 정원', icon: '🥀', range: '3601~3700', desc: '차원의 경계가 녹아내리며 검붉은 독화가 피어난 정원', baseType: 'goblin', colors: { skin: '#831843', clothes: '#4c0519', bossBody: '#be123c' }, prefixes: ['침식', '부식', '독화', '황폐', '가시'], bossPrefix: '부식의 여왕 벨라도나' },
+      { id: 38, name: '영혼의 심판의 저울', icon: '⚖️', range: '3701~3800', desc: '모든 영혼의 죄악을 달아 심판하는 사후세계의 법정', baseType: 'skeleton', colors: { bone: '#e2e8f0', dark: '#0f172a', bossBody: '#b45309' }, prefixes: ['심판', '단죄', '속죄', '영혼무게', '영겁'], bossPrefix: '명계의 집행관 아누비스' },
+      { id: 39, name: '초신성 폭발 중심핵', icon: '💥', range: '3801~3900', desc: '항성이 폭발하며 무한한 에너지를 방출하는 핵 중심부', baseType: 'dragon', colors: { body: '#f97316', dark: '#7c2d12', horn: '#fde047' }, prefixes: ['초신성', '핵융합', '작열광', '플라즈마', '섬광'], bossPrefix: '성핵의 파괴신 솔라리스' },
+      { id: 40, name: '태초의 심연 근원지', icon: '🌌', range: '3901~4000', desc: '우주의 빛이 탄생하기 이전부터 존재했던 심연의 근원지', baseType: 'demon', colors: { body: '#1e1b4b', dark: '#020617', horn: '#818cf8' }, prefixes: ['원초심연', '암흑물질', '무한', '무', '근원'], bossPrefix: '심연의 원류 카오스 엠페러' },
+      { id: 41, name: '다차원 퀀텀 넥서스', icon: '💠', range: '4001~4100', desc: '수억 개의 평행우주가 교차하는 고차원 에너지 집합체', baseType: 'golem', colors: { body: '#06b6d4', dark: '#164e63', core: '#a5f3fc' }, prefixes: ['양자', '넥서스', '차원도약', '위상변위', '중첩'], bossPrefix: '양자 수호체 퀀타' },
+      { id: 42, name: '시간의 종착역: 에테르 회랑', icon: '🕰️', range: '4101~4200', desc: '모든 시간선이 수렴하여 종말을 맞이하는 마지막 정거장', baseType: 'wraith', colors: { body: '#6366f1', dark: '#1e1b4b', glow: '#c7d2fe' }, prefixes: ['크로니클', '인과율', '시간선', '종착', '에테르'], bossPrefix: '인과의 파괴자 데스티니' },
+      { id: 43, name: '천공의 신화 판테온', icon: '🏛️', range: '4201~4300', desc: '모든 신화의 주신들이 보좌에 앉아 세계를 굽어살피는 신전', baseType: 'knight', colors: { body: '#f8fafc', dark: '#334155', trim: '#eab308' }, prefixes: ['신좌', '신격', '권능', '천상의지', '만신전'], bossPrefix: '만신의 통치자 제우스 렉스' },
+      { id: 44, name: '암흑물질 나선 성운', icon: '🌠', range: '4301~4400', desc: '빛조차 탈출하지 못하는 초고밀도 암흑 물질의 소용돌이', baseType: 'orc', colors: { skin: '#0f172a', clothes: '#1e293b', bossBody: '#334155' }, prefixes: ['암흑에너지', '중력붕괴', '사건의지평선', '밀도', '붕괴'], bossPrefix: '중력의 폭군 그라비톤' },
+      { id: 45, name: '진홍의 불사조 둥지', icon: '🔥', range: '4401~4500', desc: '죽을 때마다 더 강한 화염으로 부활하는 태양의 불사조 둥지', baseType: 'dragon', colors: { body: '#ef4444', dark: '#7f1d1d', horn: '#fbbf24' }, prefixes: ['불사', '영생', '열화', '환생', '홍염'], bossPrefix: '태양불사조 페닉스' },
+      { id: 46, name: '무한의 거울 미궁', icon: '🪞', range: '4501~4600', desc: '자신의 가장 어두운 내면과 싸워야 하는 무한한 거울 미로', baseType: 'wraith', colors: { body: '#e0e7ff', dark: '#3730a3', glow: '#818cf8' }, prefixes: ['거울상', '반사', '도플갱어', '왜곡', '이면'], bossPrefix: '거울의 지배자 스펙터' },
+      { id: 47, name: '성유물 봉인 제단', icon: '🏺', range: '4601~4700', desc: '태고의 8대 유물이 처음 주조되었던 신성한 원초의 제단', baseType: 'slime', colors: { body: '#eab308', dark: '#713f12', bossBody: '#fde047', bossDark: '#854d0e' }, prefixes: ['성유물', '태고의힘', '봉인해제', '고대유산', '각성'], bossPrefix: '성유물의 수호신 파프니르' },
+      { id: 48, name: '창조와 파멸의 경계선', icon: '☯️', range: '4701~4800', desc: '물질의 생성과 소멸이 한 호흡으로 이루어지는 세계의 경계선', baseType: 'knight', colors: { body: '#cbd5e1', dark: '#0f172a', trim: '#ef4444' }, prefixes: ['음양', '창조', '파멸', '균형', '조율'], bossPrefix: '차원 조율자 오르도' },
+      { id: 49, name: '초월자의 신역: 아스트랄 차원', icon: '🔯', range: '4801~4900', desc: '필멸자의 한계를 넘어선 초월자만이 도달할 수 있는 신성 영역', baseType: 'demon', colors: { body: '#581c87', dark: '#1e1b4b', horn: '#ec4899' }, prefixes: ['아스트랄', '초월신격', '정점', '신역', '무한한영혼'], bossPrefix: '아스트랄 군주 데미우르고스' },
+      { id: 50, name: '세계의 정점: 오메가 특이점', icon: '👑', range: '4901~5000', desc: '스테이지 5000 최종 도달점! 모든 차원의 시초이자 끝을 관장하는 정점', baseType: 'dragon', colors: { body: '#ffd700', dark: '#78350f', horn: '#38bdf8' }, prefixes: ['오메가', '궁극', '최종정점', '영겁의창조', '만물의끝'], bossPrefix: '만물의 창조주 & 파괴신 [OMEGA]' }
     ];
 
-    // Helper: Get stage theme info for ANY stage from 1 to 1000
+    // Helper: Get stage theme info for ANY stage from 1 to 5000
     function getStageInfo(stageNum) {
       const s = Math.max(1, Math.min(MAX_GAME_STAGE, stageNum));
-      const regionIdx = Math.min(REGION_THEMES.length - 1, Math.floor((s - 1) / 50));
+      const regionIdx = Math.min(REGION_THEMES.length - 1, Math.floor((s - 1) / STAGES_PER_REGION));
       const reg = REGION_THEMES[regionIdx];
-      const subIndex = ((s - 1) % 50) + 1; // 1 ~ 50 in region
+      const subIndex = ((s - 1) % STAGES_PER_REGION) + 1; // 1 ~ 100 in region
       return {
         stage: s,
         regionId: reg.id,
         regionName: reg.name,
         icon: reg.icon,
-        desc: `${reg.desc} (${subIndex}/50구역)`,
+        desc: `${reg.desc} (${subIndex}/100구역)`,
         theme: reg,
         subIndex
       };
@@ -2019,13 +2050,13 @@
         // 70% primary region archetype, 30% thematic minion variation
         type = Math.random() < 0.7 ? reg.baseType : altType;
       } else {
-        type = (subIdx === 50) ? 'demon' : reg.baseType;
+        type = (subIdx === STAGES_PER_REGION) ? 'demon' : reg.baseType;
       }
 
       // Procedural Name
       let monsterName = '';
       if (isBoss) {
-        monsterName = (subIdx === 50) ? `[군주] ${reg.bossPrefix}` : `[보스] ${reg.prefixes[subIdx % reg.prefixes.length]} 수호자`;
+        monsterName = (subIdx === STAGES_PER_REGION) ? `[군주] ${reg.bossPrefix}` : `[보스] ${reg.prefixes[subIdx % reg.prefixes.length]} 수호자`;
       } else {
         const prefix = reg.prefixes[(game.stage + subIdx) % reg.prefixes.length];
         const typeKo = {
@@ -2035,9 +2066,9 @@
         monsterName = `[${prefix}] ${typeKo}`;
       }
 
-      // Smooth mathematical curve scaling up to Stage 1000
+      // Smooth mathematical curve scaling up to Stage 5000
       const stgFactor = game.stage - 1;
-      const stageMultiplier = Math.pow(1.038, stgFactor) * (1 + stgFactor * 0.18);
+      const stageMultiplier = Math.pow(1.022, stgFactor) * (1 + stgFactor * 0.12);
       const baseHp = (50 + game.stage * 12) * stageMultiplier * (isBoss ? 7.0 : 1.0);
       const baseAtk = (5 + game.stage * 1.8) * stageMultiplier * (isBoss ? 2.4 : 1.0);
 
@@ -2278,7 +2309,11 @@
           if (game.highestStage < MAX_GAME_STAGE) {
             game.highestStage++;
           }
-          displayToast(`🎉 STAGE ${game.stage} 보스 토벌 돌파! (보석 +${firstClearGems})`);
+          if (game.stage >= MAX_GAME_STAGE) {
+            displayToast(`🏆 STAGE 5000 최종 정점 정복! [COMING SOON: 차기 대규모 차원 업데이트 준비 중]`);
+          } else {
+            displayToast(`🎉 STAGE ${game.stage} 보스 토벌 돌파! (보석 +${firstClearGems})`);
+          }
         } else {
           displayToast(`🎉 STAGE ${game.stage} 보스 토벌 성공!`);
         }
@@ -2704,10 +2739,11 @@
       const stats = getEffectiveStats();
       document.getElementById('txtCombatPower').textContent = formatNumber(stats.cp);
 
-      // 2. Stage Info (1 ~ 1000)
+      // 2. Stage Info (1 ~ 5000)
       const stgInfo = getStageInfo(game.stage);
-      document.getElementById('txtCurrentStage').innerHTML = `<span>STAGE ${game.stage}</span> <span class="text-[10px] text-yellow-400/80 group-hover:scale-110 transition-transform">📋</span>`;
-      document.getElementById('txtStageName').textContent = `${stgInfo.icon} ${stgInfo.regionName} (${stgInfo.subIndex}/50)`;
+      const isMaxStage = (game.stage >= MAX_GAME_STAGE);
+      document.getElementById('txtCurrentStage').innerHTML = `<span>STAGE ${game.stage}${isMaxStage ? ' <span class="text-[9px] text-cyan-300 font-bold bg-[#14233a] px-1 py-0.2 rounded border border-cyan-500/40">MAX</span>' : ''}</span> <span class="text-[10px] text-yellow-400/80 group-hover:scale-110 transition-transform">📋</span>`;
+      document.getElementById('txtStageName').textContent = `${stgInfo.icon} ${stgInfo.regionName} (${stgInfo.subIndex}/100)`;
 
       // Pending stage reservation indicator
       const pendingEl = document.getElementById('txtPendingStage');
@@ -4278,7 +4314,7 @@
       }
     });
 
-    // Stage Selection Modal Handlers (20 Regions Paging for 1000 Stages)
+    // Stage Selection Modal Handlers (50 Regions Paging for 5000 Stages + COMING SOON)
     let selectedModalRegionId = 1;
 
     function populateRegionSelect() {
@@ -4291,6 +4327,12 @@
         opt.textContent = `${reg.icon} ${reg.id}구역: ${reg.name} (Lv.${reg.range})`;
         sel.appendChild(opt);
       });
+      // 51st Option: COMING SOON teaser
+      const optNext = document.createElement('option');
+      optNext.value = 51;
+      optNext.textContent = `🚀 [NEXT] 51구역: 차원 너머의 신세계 (COMING SOON)`;
+      sel.appendChild(optNext);
+
       sel.addEventListener('change', (e) => {
         selectedModalRegionId = parseInt(e.target.value, 10);
         renderStageModal();
@@ -4309,9 +4351,28 @@
       const sel = document.getElementById('selStageRegion');
       if (sel) sel.value = selectedModalRegionId;
 
+      // Handle COMING SOON virtual region 51
+      if (selectedModalRegionId === 51) {
+        container.innerHTML = `
+          <div class="pixel-box p-4 bg-gradient-to-b from-[#2a134a] to-[#120824] border-2 border-yellow-400/90 rounded text-center shadow-xl flex flex-col items-center gap-2.5 my-auto">
+            <span class="text-3xl animate-bounce">🚀</span>
+            <div class="font-extrabold text-sm sm:text-base text-yellow-300 tracking-wider">
+              제 51구역: 차원 너머의 신세계 [COMING SOON]
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed max-w-xs">
+              스테이지 5000 최종 관문을 돌파한 위대한 초월자만을 위한 <span class="text-yellow-400 font-bold">차기 대규모 차원 확장 업데이트</span>가 진행 중입니다!
+            </p>
+            <div class="flex items-center gap-2 bg-[#1b0d36] px-3 py-1.5 rounded-full border border-yellow-500/40 text-[11px] text-yellow-300 font-bold">
+              <span>✨ 신규 차원 장비 & 궁극 유물 개발 중</span>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
       const reg = REGION_THEMES[selectedModalRegionId - 1];
-      const startStage = (selectedModalRegionId - 1) * 50 + 1;
-      const endStage = selectedModalRegionId * 50;
+      const startStage = (selectedModalRegionId - 1) * STAGES_PER_REGION + 1;
+      const endStage = selectedModalRegionId * STAGES_PER_REGION;
 
       let html = '';
       for (let sId = startStage; sId <= endStage; sId++) {
@@ -4328,7 +4389,7 @@
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="font-extrabold text-xs sm:text-sm text-yellow-300">STAGE ${sId}</span>
-                    <span class="text-[11px] font-bold text-slate-200 truncate">${reg.name} ${sId % 50 === 0 ? '[최종보스]' : (isBossStage ? '[보스]' : '')}</span>
+                    <span class="text-[11px] font-bold text-slate-200 truncate">${reg.name} ${sId % STAGES_PER_REGION === 0 ? '[최종보스]' : (isBossStage ? '[보스]' : '')}</span>
                     ${isCurrent ? `<span class="bg-yellow-400 text-black font-extrabold text-[9px] px-1.5 py-0.2 rounded animate-pulse">현재 도전 중</span>` : ''}
                     ${isCleared ? `<span class="bg-emerald-950 text-emerald-300 border border-emerald-600 font-bold text-[9px] px-1.5 py-0.2 rounded">👑 클리어</span>` : ''}
                   </div>
@@ -4361,6 +4422,22 @@
             </div>
           `;
         }
+      }
+
+      // If Region 50, show the COMING SOON card after Stage 5000
+      if (selectedModalRegionId === 50) {
+        html += `
+          <div class="pixel-box p-3 bg-gradient-to-r from-[#2a134a] to-[#160c2b] border-2 border-yellow-400/80 rounded mt-2 text-center shadow-lg">
+            <div class="flex items-center justify-center gap-2 mb-1">
+              <span class="text-lg animate-bounce">🚀</span>
+              <span class="font-extrabold text-xs sm:text-sm text-yellow-300 tracking-wider">STAGE 5001+ [COMING SOON]</span>
+              <span class="text-lg animate-bounce">✨</span>
+            </div>
+            <p class="text-[11px] text-cyan-200">
+              초월과 유물의 정점에 도달한 용사님을 위한 <b class="text-yellow-400">차기 대규모 업데이트</b> 준비 중!
+            </p>
+          </div>
+        `;
       }
 
       container.innerHTML = html;
@@ -4396,7 +4473,7 @@
     });
 
     document.getElementById('btnNextRegion').addEventListener('click', () => {
-      if (selectedModalRegionId < REGION_THEMES.length) {
+      if (selectedModalRegionId < 51) {
         selectedModalRegionId++;
         renderStageModal();
       }
@@ -4404,20 +4481,20 @@
 
     // Quick Jump Buttons in Modal
     document.getElementById('btnJumpToCurrentStage').addEventListener('click', () => {
-      selectedModalRegionId = Math.min(REGION_THEMES.length, Math.floor((game.stage - 1) / 50) + 1);
+      selectedModalRegionId = Math.min(REGION_THEMES.length, Math.floor((game.stage - 1) / STAGES_PER_REGION) + 1);
       renderStageModal();
       displayToast(`현재 위치인 제 ${selectedModalRegionId}구역으로 이동했습니다.`);
     });
 
     document.getElementById('btnJumpToHighestStage').addEventListener('click', () => {
-      selectedModalRegionId = Math.min(REGION_THEMES.length, Math.floor((game.highestStage - 1) / 50) + 1);
+      selectedModalRegionId = Math.min(REGION_THEMES.length, Math.floor((game.highestStage - 1) / STAGES_PER_REGION) + 1);
       renderStageModal();
       displayToast(`최고 돌파 위치인 제 ${selectedModalRegionId}구역으로 이동했습니다.`);
     });
 
     document.getElementById('btnStageSelector').addEventListener('click', () => {
       audio.init();
-      selectedModalRegionId = Math.min(REGION_THEMES.length, Math.floor((game.stage - 1) / 50) + 1);
+      selectedModalRegionId = Math.min(REGION_THEMES.length, Math.floor((game.stage - 1) / STAGES_PER_REGION) + 1);
       renderStageModal();
       document.getElementById('stageSelectModal').classList.remove('hidden');
     });
