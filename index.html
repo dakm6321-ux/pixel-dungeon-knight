@@ -375,15 +375,21 @@
         <!-- TAB 1: 스텟 (STATS) -->
         <!-- ===================================== -->
         <div id="tab-stats" class="tab-pane flex flex-col gap-2.5">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs text-slate-300 font-bold flex items-center gap-1">
-              💪 기본 능력치 강화 <span class="text-[10px] text-slate-400 font-normal">(골드로 레벨업)</span>
+          <div class="flex items-center justify-between mb-1 gap-1">
+            <span class="text-xs text-slate-300 font-bold flex items-center gap-1 truncate">
+              💪 기본 능력치 강화
             </span>
-            <!-- Upgrade Bulk Selector: x1, x10, x100, MAX -->
-            <div class="flex items-center gap-1 bg-[#1e1736] p-0.5 rounded border border-[#3b2a59] text-[10px]">
-              <button class="btn-bulk-stat px-2 py-0.5 rounded font-bold text-yellow-400 bg-[#3c2f66]" data-bulk="1">x1</button>
-              <button class="btn-bulk-stat px-2 py-0.5 rounded font-bold text-slate-400 hover:text-yellow-400" data-bulk="10">x10</button>
-              <button class="btn-bulk-stat px-2 py-0.5 rounded font-bold text-slate-400 hover:text-yellow-400" data-bulk="100">x100</button>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <!-- Detailed Stats Modal Button (x1 버튼 왼쪽에 배치) -->
+              <button id="btnOpenDetailedStats" class="pixel-btn px-2 py-0.5 bg-[#251a42] hover:bg-[#3a2766] text-cyan-300 font-bold text-[10px] rounded border border-cyan-500/40 flex items-center gap-1 whitespace-nowrap shadow-sm" title="자세한 능력치 종합 정보 보기">
+                <span>📊 상세정보</span>
+              </button>
+              <!-- Upgrade Bulk Selector: x1, x10, x100 -->
+              <div class="flex items-center gap-1 bg-[#1e1736] p-0.5 rounded border border-[#3b2a59] text-[10px]">
+                <button class="btn-bulk-stat px-2 py-0.5 rounded font-bold text-yellow-400 bg-[#3c2f66]" data-bulk="1">x1</button>
+                <button class="btn-bulk-stat px-2 py-0.5 rounded font-bold text-slate-400 hover:text-yellow-400" data-bulk="10">x10</button>
+                <button class="btn-bulk-stat px-2 py-0.5 rounded font-bold text-slate-400 hover:text-yellow-400" data-bulk="100">x100</button>
+              </div>
             </div>
           </div>
 
@@ -735,7 +741,43 @@
     </div>
   </div>
 
-  <!-- GACHA PROBABILITY RATES MODAL (Centered Pop-up) -->
+  <!-- DETAILED STATS MODAL (Centered Pop-up) -->
+  <div id="detailedStatsModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 select-none">
+    <div class="pixel-box w-full max-w-sm sm:max-w-md bg-[#18122d] p-3.5 sm:p-4 flex flex-col gap-2.5 border-2 border-yellow-400 shadow-2xl relative max-h-[90vh]">
+      <div class="flex justify-between items-center border-b border-[#362758] pb-1.5">
+        <h3 class="text-sm sm:text-base font-extrabold text-yellow-300 flex items-center gap-1.5">
+          📊 용사 상세 능력치 종합 정보
+        </h3>
+        <button id="btnCloseDetailedStatsModal" class="text-slate-400 hover:text-white font-bold text-base px-1.5 py-0.5">✕</button>
+      </div>
+
+      <!-- Combat Power Hero Summary Header -->
+      <div class="flex items-center justify-between bg-[#100a20] px-3 py-2 rounded border border-[#2d1e4a]">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl p-1 bg-[#1a1233] rounded border border-yellow-500/30">⚔️</span>
+          <div>
+            <div class="text-[10px] text-slate-400 font-bold">용사 종합 전투력</div>
+            <div id="detailStatsCp" class="text-sm sm:text-base font-extrabold text-yellow-300 font-mono">0</div>
+          </div>
+        </div>
+        <div class="text-right text-[10px] text-slate-400 font-mono">
+          <div>STAGE <span id="detailStatsStage" class="text-cyan-300 font-bold">1</span></div>
+          <div>최고 <span id="detailStatsHighestStage" class="text-yellow-400 font-bold">1</span></div>
+        </div>
+      </div>
+
+      <!-- Scrollable Stats Breakdown List -->
+      <div id="detailedStatsContent" class="flex flex-col gap-2 overflow-y-auto max-h-[380px] pr-1 text-xs">
+        <!-- Dynamically rendered via JS -->
+      </div>
+
+      <button id="btnConfirmDetailedStatsModal" class="pixel-btn w-full bg-yellow-500 hover:bg-yellow-400 text-black font-extrabold text-xs py-2 rounded">
+        확인
+      </button>
+    </div>
+  </div>
+
+    <!-- GACHA PROBABILITY RATES MODAL (Centered Pop-up) -->
   <div id="rateInfoModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 select-none">
     <div class="pixel-box w-full max-w-xs sm:max-w-sm bg-[#1b1533] p-4 flex flex-col gap-3 border-2 border-cyan-400 shadow-2xl relative">
       <div class="flex justify-between items-center border-b border-[#362758] pb-2">
@@ -2779,6 +2821,9 @@
 
       // 3. Render active tab view
       renderStatsTab();
+      if (document.getElementById('detailedStatsModal') && !document.getElementById('detailedStatsModal').classList.contains('hidden')) {
+        renderDetailedStats();
+      }
       renderEquipTab();
       renderRelicTab();
       renderGachaTab();
@@ -2787,6 +2832,253 @@
       if (typeof updateMainScreenInfo === 'function') {
         updateMainScreenInfo();
       }
+    }
+
+    // ============================================================
+    // DETAILED STATS MODAL RENDERING
+    // ============================================================
+    function renderDetailedStats() {
+      const modal = document.getElementById('detailedStatsModal');
+      if (!modal || modal.classList.contains('hidden')) return;
+
+      const stats = getEffectiveStats();
+      const cpEl = document.getElementById('detailStatsCp');
+      const stgEl = document.getElementById('detailStatsStage');
+      const hStgEl = document.getElementById('detailStatsHighestStage');
+      const contentEl = document.getElementById('detailedStatsContent');
+
+      if (cpEl) cpEl.textContent = formatNumber(stats.cp);
+      if (stgEl) stgEl.textContent = `${game.stage}`;
+      if (hStgEl) hStgEl.textContent = `${game.highestStage}`;
+      if (!contentEl) return;
+
+      // Equipment details
+      const eq = game.equipped || {};
+      const wItem = eq.weapon;
+      const aItem = eq.armor;
+      const hItem = eq.helmet;
+      const rItem = eq.ring;
+      const wTier = wItem ? TIERS[wItem.tier - 1] : null;
+      const aTier = aItem ? TIERS[aItem.tier - 1] : null;
+      const hTier = hItem ? TIERS[hItem.tier - 1] : null;
+      const rTier = rItem ? TIERS[rItem.tier - 1] : null;
+
+      // Relic levels
+      const rSword = (game.relics && game.relics.relic_sword) ? game.relics.relic_sword.level : 0;
+      const rTree = (game.relics && game.relics.relic_tree) ? game.relics.relic_tree.level : 0;
+      const rDragon = (game.relics && game.relics.relic_dragon_eye) ? game.relics.relic_dragon_eye.level : 0;
+      const rMidas = (game.relics && game.relics.relic_midas_cup) ? game.relics.relic_midas_cup.level : 0;
+      const rGem = (game.relics && game.relics.relic_gem_compass) ? game.relics.relic_gem_compass.level : 0;
+      const rHermes = (game.relics && game.relics.relic_hermes_wing) ? game.relics.relic_hermes_wing.level : 0;
+      const rGrail = (game.relics && game.relics.relic_holy_grail) ? game.relics.relic_holy_grail.level : 0;
+      const rClock = (game.relics && game.relics.relic_chrono_clock) ? game.relics.relic_chrono_clock.level : 0;
+
+      // Berserk active state
+      const isBerserk = (game.skills && game.skills.berserk && game.skills.berserk.duration > 0);
+
+      contentEl.innerHTML = `
+        <!-- 1. CORE COMBAT STATS -->
+        <div class="pixel-box p-2 bg-[#140e24] border border-[#3b2a59] flex flex-col gap-1.5">
+          <div class="text-[11px] font-extrabold text-yellow-300 border-b border-[#2d1e47] pb-1 flex items-center gap-1">
+            <span>⚔️</span> 핵심 전투 능력치
+          </div>
+
+          <!-- ATK -->
+          <div class="flex items-center justify-between py-0.5 border-b border-slate-800/60">
+            <div class="flex flex-col">
+              <span class="font-bold text-slate-200">공격력 (ATK)</span>
+              <span class="text-[9px] text-slate-400">
+                기본 Lv.${game.stats.atk} (${formatNumber(5 + (game.stats.atk - 1) * 2)}) 
+                + 무기 ${wTier ? `[${wTier.name}] +${wItem.level}강` : '없음'}
+                ${rSword > 0 ? ` + 성검(+${15 + (rSword - 1) * 10}%)` : ''}
+                ${isBerserk ? ' <b class="text-rose-400">[광폭화]</b>' : ''}
+              </span>
+            </div>
+            <span class="font-mono font-extrabold text-sm text-yellow-400">${formatNumber(stats.atk)}</span>
+          </div>
+
+          <!-- HP -->
+          <div class="flex items-center justify-between py-0.5 border-b border-slate-800/60">
+            <div class="flex flex-col">
+              <span class="font-bold text-slate-200">최대 체력 (HP)</span>
+              <span class="text-[9px] text-slate-400">
+                기본 Lv.${game.stats.maxHp} (${formatNumber(50 + (game.stats.maxHp - 1) * 15)}) 
+                + 갑옷 ${aTier ? `[${aTier.name}] +${aItem.level}강` : '없음'}
+                ${rTree > 0 ? ` + 세계수(+${20 + (rTree - 1) * 15}%)` : ''}
+              </span>
+            </div>
+            <span class="font-mono font-extrabold text-sm text-emerald-400">${formatNumber(stats.maxHp)}</span>
+          </div>
+
+          <!-- HP Regen -->
+          <div class="flex items-center justify-between py-0.5 border-b border-slate-800/60">
+            <div class="flex flex-col">
+              <span class="font-bold text-slate-200">체력 회복력 (Regen)</span>
+              <span class="text-[9px] text-slate-400">
+                기본 Lv.${game.stats.hpRegen} (${formatNumber(1 + (game.stats.hpRegen - 1) * 1)}/초) 
+                + 투구 ${hTier ? `[${hTier.name}] +${hItem.level}강` : '없음'}
+                ${rGrail > 0 ? ` + 성배(+${35 + (rGrail - 1) * 25}%)` : ''}
+              </span>
+            </div>
+            <span class="font-mono font-extrabold text-sm text-pink-400">${formatNumber(stats.hpRegen)}/초</span>
+          </div>
+
+          <!-- Crit Rate -->
+          <div class="flex items-center justify-between py-0.5 border-b border-slate-800/60">
+            <div class="flex flex-col">
+              <span class="font-bold text-slate-200">치명타 확률 (Crit Rate)</span>
+              <span class="text-[9px] text-slate-400">
+                기본 Lv.${game.stats.critRate} (${Math.min(100, 5 + (game.stats.critRate - 1) * 1)}%) 
+                + 반지 ${rTier ? `[${rTier.name}]` : '없음'} (최대 100% 한도)
+              </span>
+            </div>
+            <span class="font-mono font-extrabold text-sm ${stats.critRate >= 100 ? 'text-amber-300' : 'text-cyan-300'}">${stats.critRate}%${stats.critRate >= 100 ? ' (MAX)' : ''}</span>
+          </div>
+
+          <!-- Crit DMG -->
+          <div class="flex items-center justify-between py-0.5 border-b border-slate-800/60">
+            <div class="flex flex-col">
+              <span class="font-bold text-slate-200">치명타 피해 (Crit DMG)</span>
+              <span class="text-[9px] text-slate-400">
+                기본 Lv.${game.stats.critDmg} (+${150 + (game.stats.critDmg - 1) * 5}%) 
+                + 반지 ${rTier ? `[${rTier.name}]` : '없음'}
+                ${rDragon > 0 ? ` + 용안(+${50 + (rDragon - 1) * 30}%)` : ''}
+                ${isBerserk ? ' <b class="text-rose-400">[광폭화]</b>' : ''}
+              </span>
+            </div>
+            <span class="font-mono font-extrabold text-sm text-amber-400">+${stats.critDmg}%</span>
+          </div>
+
+          <!-- ATK Speed -->
+          <div class="flex items-center justify-between py-0.5">
+            <div class="flex flex-col">
+              <span class="font-bold text-slate-200">공격 속도 (ATK Speed)</span>
+              <span class="text-[9px] text-slate-400">
+                기본 Lv.${game.stats.atkSpeed} (${(1.0 + (game.stats.atkSpeed - 1) * 0.03).toFixed(2)}/초) 
+                ${rHermes > 0 ? ` + 헤르메스(+${15 + (rHermes - 1) * 10}%)` : ''}
+                ${isBerserk ? ' <b class="text-rose-400">[광폭화]</b>' : ''}
+              </span>
+            </div>
+            <span class="font-mono font-extrabold text-sm text-yellow-300">${stats.atkSpeed}회/초</span>
+          </div>
+        </div>
+
+        <!-- 2. FARMING & UTILITY PASSIVES -->
+        <div class="pixel-box p-2 bg-[#140e24] border border-[#3b2a59] flex flex-col gap-1.5">
+          <div class="text-[11px] font-extrabold text-cyan-300 border-b border-[#2d1e47] pb-1 flex items-center gap-1">
+            <span>✨</span> 파밍 & 특수 패시브 효과
+          </div>
+
+          <!-- Gold Bonus -->
+          <div class="flex items-center justify-between py-0.5 border-b border-slate-800/60">
+            <div class="flex items-center gap-1.5">
+              <span>💰</span>
+              <span class="text-slate-200">몬스터 골드 획득량 증가</span>
+            </div>
+            <span class="font-mono font-bold text-amber-300">+${rMidas > 0 ? (10 + (rMidas - 1) * 2) : 0}%</span>
+          </div>
+
+          <!-- Gem Bonus -->
+          <div class="flex items-center justify-between py-0.5 border-b border-slate-800/60">
+            <div class="flex items-center gap-1.5">
+              <span>💎</span>
+              <span class="text-slate-200">보스 보석 획득량 증가</span>
+            </div>
+            <span class="font-mono font-bold text-cyan-300">+${rGem > 0 ? (1 + (rGem - 1) * 1) : 0}%</span>
+          </div>
+
+          <!-- Skill Cooldown Reduction -->
+          <div class="flex items-center justify-between py-0.5 border-b border-slate-800/60">
+            <div class="flex items-center gap-1.5">
+              <span>⏳</span>
+              <span class="text-slate-200">전투 스킬 쿨타임 감소</span>
+            </div>
+            <span class="font-mono font-bold text-purple-300">-${rClock > 0 ? Math.min(50, 10 + (rClock - 1) * 3) : 0}%</span>
+          </div>
+
+          <!-- Shield Skill Info -->
+          <div class="flex items-center justify-between py-0.5">
+            <div class="flex items-center gap-1.5">
+              <span>🛡️</span>
+              <span class="text-slate-200">신성한 가호 (보호막/치유)</span>
+            </div>
+            <span class="font-mono font-bold text-emerald-300">Lv.${game.skills.shield.level}</span>
+          </div>
+        </div>
+
+        <!-- 3. CURRENT EQUIPPED GEAR STATUS -->
+        <div class="pixel-box p-2 bg-[#140e24] border border-[#3b2a59] flex flex-col gap-1.5">
+          <div class="text-[11px] font-extrabold text-amber-300 border-b border-[#2d1e47] pb-1 flex items-center gap-1">
+            <span>🛡️</span> 현재 장착 장비 상태
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5 text-[10px]">
+            <!-- Weapon -->
+            <div class="bg-[#100a20] p-1.5 rounded border border-slate-800 flex items-center gap-1.5">
+              <span class="text-base">🗡️</span>
+              <div class="min-w-0">
+                <div class="font-bold truncate" style="color: ${wTier ? wTier.color : '#64748b'};">
+                  ${wTier ? `[${wTier.name}] ${wItem.level}강` : '무기 없음'}
+                </div>
+                <div class="text-[9px] text-slate-400 font-mono">
+                  ${wItem && wItem.awake ? `★${wItem.awake}각성 (+${wItem.awake * 50}%)` : (wItem ? '미각성' : '-')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Armor -->
+            <div class="bg-[#100a20] p-1.5 rounded border border-slate-800 flex items-center gap-1.5">
+              <span class="text-base">🛡️</span>
+              <div class="min-w-0">
+                <div class="font-bold truncate" style="color: ${aTier ? aTier.color : '#64748b'};">
+                  ${aTier ? `[${aTier.name}] ${aItem.level}강` : '갑옷 없음'}
+                </div>
+                <div class="text-[9px] text-slate-400 font-mono">
+                  ${aItem && aItem.awake ? `★${aItem.awake}각성 (+${aItem.awake * 50}%)` : (aItem ? '미각성' : '-')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Helmet -->
+            <div class="bg-[#100a20] p-1.5 rounded border border-slate-800 flex items-center gap-1.5">
+              <span class="text-base">🪖</span>
+              <div class="min-w-0">
+                <div class="font-bold truncate" style="color: ${hTier ? hTier.color : '#64748b'};">
+                  ${hTier ? `[${hTier.name}] ${hItem.level}강` : '투구 없음'}
+                </div>
+                <div class="text-[9px] text-slate-400 font-mono">
+                  ${hItem && hItem.awake ? `★${hItem.awake}각성 (+${hItem.awake * 50}%)` : (hItem ? '미각성' : '-')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Ring -->
+            <div class="bg-[#100a20] p-1.5 rounded border border-slate-800 flex items-center gap-1.5">
+              <span class="text-base">💍</span>
+              <div class="min-w-0">
+                <div class="font-bold truncate" style="color: ${rTier ? rTier.color : '#64748b'};">
+                  ${rTier ? `[${rTier.name}] ${rItem.level}강` : '반지 없음'}
+                </div>
+                <div class="text-[9px] text-slate-400 font-mono">
+                  ${rItem && rItem.awake ? `★${rItem.awake}각성 (+${rItem.awake * 50}%)` : (rItem ? '미각성' : '-')}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openDetailedStatsModal() {
+      audio.init();
+      renderDetailedStats();
+      const modal = document.getElementById('detailedStatsModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeDetailedStatsModal() {
+      const modal = document.getElementById('detailedStatsModal');
+      if (modal) modal.classList.add('hidden');
     }
 
     // STATS TAB RENDERING
@@ -4542,6 +4834,14 @@
       game.autoSkill = !game.autoSkill;
       document.getElementById('btnAutoSkillToggle').textContent = game.autoSkill ? '⚡ 자동스킬: ON' : '⚡ 자동스킬: OFF';
       displayToast(game.autoSkill ? '자동 스킬 시전 활성화' : '수동 스킬 시전 모드');
+    });
+
+    // Detailed Stats Modal Event Listeners
+    document.getElementById('btnOpenDetailedStats').addEventListener('click', openDetailedStatsModal);
+    document.getElementById('btnCloseDetailedStatsModal').addEventListener('click', closeDetailedStatsModal);
+    document.getElementById('btnConfirmDetailedStatsModal').addEventListener('click', closeDetailedStatsModal);
+    document.getElementById('detailedStatsModal').addEventListener('click', (e) => {
+      if (e.target.id === 'detailedStatsModal') closeDetailedStatsModal();
     });
 
     // Game speed toggle (1x -> 1.5x -> 2x)
