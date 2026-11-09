@@ -1187,10 +1187,10 @@
         icon: '🧭',
         tier: 5, // 전설
         optionName: '보석 획득량 증가',
-        baseBuff: 30, // +30%
-        perLevel: 20, // +20%
-        getDesc: (lvl) => `보스 처치 시 보석 획득량 +${30 + (lvl - 1) * 20}% 영구 증가`,
-        getNextDesc: (lvl) => `보석 획득량 +${30 + lvl * 20}% (+20%)`,
+        baseBuff: 10, // +10% (1렙 시작)
+        perLevel: 2,  // +2% (1업당)
+        getDesc: (lvl) => `보스 처치 시 보석 획득량 +${10 + (lvl - 1) * 2}% 영구 증가`,
+        getNextDesc: (lvl) => `보석 획득량 +${10 + lvl * 2}% (+2%)`,
       },
       {
         key: 'relic_hermes_wing',
@@ -2252,7 +2252,7 @@
           relicGoldMult += 0.30 + (game.relics.relic_midas_cup.level - 1) * 0.20;
         }
         if (game.relics.relic_gem_compass && game.relics.relic_gem_compass.level > 0) {
-          relicGemMult += 0.30 + (game.relics.relic_gem_compass.level - 1) * 0.20;
+          relicGemMult += 0.10 + (game.relics.relic_gem_compass.level - 1) * 0.02;
         }
       }
       const finalGoldReward = Math.floor(m.goldReward * relicGoldMult);
