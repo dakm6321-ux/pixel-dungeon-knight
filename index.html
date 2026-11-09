@@ -337,28 +337,33 @@
     <!-- ========================================== -->
     <section class="flex-1 min-h-0 flex flex-col bg-[#141024] border-t-2 border-[#2b2247] z-10 overflow-hidden">
       
-      <!-- Tab Navigation Buttons (Compact & Sharp) -->
-      <nav class="grid grid-cols-5 bg-[#0e0a1a] border-b-2 border-[#2b2247] text-xs font-bold shrink-0">
+      <!-- Tab Navigation Buttons (6 Columns with Relics) -->
+      <nav class="grid grid-cols-6 bg-[#0e0a1a] border-b-2 border-[#2b2247] text-xs font-bold shrink-0">
         <button data-tab="stats" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors pixel-tab-active">
           <span class="text-sm sm:text-base">📊</span>
-          <span class="text-[10px] sm:text-[11px]">스텟</span>
+          <span class="text-[9px] sm:text-[10px]">스텟</span>
         </button>
         <button data-tab="skills" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400">
           <span class="text-sm sm:text-base">⚡</span>
-          <span class="text-[10px] sm:text-[11px]">스킬</span>
+          <span class="text-[9px] sm:text-[10px]">스킬</span>
         </button>
         <button data-tab="equip" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400">
           <span class="text-sm sm:text-base">🗡️</span>
-          <span class="text-[10px] sm:text-[11px]">장비</span>
+          <span class="text-[9px] sm:text-[10px]">장비</span>
+        </button>
+        <button data-tab="relic" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400 relative">
+          <span class="text-sm sm:text-base">🏺</span>
+          <span class="text-[9px] sm:text-[10px]">유물</span>
+          <span id="relicBadge" class="hidden absolute top-1 right-2 w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
         </button>
         <button data-tab="gacha" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400 relative">
           <span class="text-sm sm:text-base">🎲</span>
-          <span class="text-[10px] sm:text-[11px]">뽑기</span>
+          <span class="text-[9px] sm:text-[10px]">뽑기</span>
           <span id="gachaBadge" class="hidden absolute top-1 right-2 w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
         </button>
         <button data-tab="quest" class="tab-btn py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 border-b-2 border-transparent hover:bg-[#201838] transition-colors text-slate-400 relative">
           <span class="text-sm sm:text-base">🏆</span>
-          <span class="text-[10px] sm:text-[11px]">업적/설정</span>
+          <span class="text-[9px] sm:text-[10px]">업적</span>
           <span id="questBadge" class="hidden absolute top-1 right-2 w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
         </button>
       </nav>
@@ -441,66 +446,157 @@
         </div>
 
         <!-- ===================================== -->
-        <!-- TAB 4: 뽑기 (GACHA / SUMMON) -->
+        <!-- TAB: 🏺 유물 (RELICS - PASSIVE OWNED EFFECTS) -->
         <!-- ===================================== -->
-        <div id="tab-gacha" class="tab-pane hidden flex flex-col gap-3">
+        <div id="tab-relic" class="tab-pane hidden flex flex-col gap-2.5">
           
-          <!-- Summon Level & Rate Progress Box -->
-          <div class="pixel-box p-3 bg-[#18132c] flex flex-col gap-2">
-            <div class="flex justify-between items-center text-xs">
-              <span class="font-bold text-yellow-400 flex items-center gap-1">
-                ⭐ 장비 소환 레벨: <span id="txtGachaLevel" class="text-cyan-300 font-extrabold text-sm">Lv.1</span>
-              </span>
-              <button id="btnShowRates" class="text-[10px] text-cyan-400 underline hover:text-cyan-300">
-                등급별 확률표 보기
-              </button>
-            </div>
-
-            <!-- Gacha EXP Bar -->
-            <div class="flex flex-col gap-1">
-              <div class="flex justify-between text-[10px] text-slate-300">
-                <span>다음 소환 레벨까지</span>
-                <span id="txtGachaExp">0 / 50 회</span>
-              </div>
-              <div class="w-full h-2.5 bg-[#251d42] rounded-full overflow-hidden border border-[#43336d]">
-                <div id="barGachaExp" class="h-full bg-gradient-to-r from-cyan-500 to-yellow-400 transition-all duration-200" style="width: 0%"></div>
-              </div>
-            </div>
-
-            <p class="text-[10px] text-slate-400">
-              💡 뽑기를 진행할수록 소환 레벨이 상승하여 <span class="text-yellow-300 font-bold">영웅/전설/신화/초월</span> 등급의 희귀 장비가 등장할 확률이 대폭 증가합니다!
-            </p>
-          </div>
-
-          <!-- Summon Banner Graphics & Buttons -->
-          <div class="pixel-box p-3 bg-gradient-to-b from-[#21183d] to-[#140e26] flex flex-col items-center gap-3 text-center border-yellow-500/30">
-            <div class="text-2xl sm:text-3xl animate-bounce">🗡️✨💎</div>
+          <!-- Relic Overview & Batch Upgrade Bar -->
+          <div class="pixel-box p-2.5 bg-[#171329] flex items-center justify-between gap-2 border-yellow-500/40">
             <div>
-              <h3 class="text-sm sm:text-base font-extrabold text-yellow-300">고대 보물 장비 소환</h3>
-              <p class="text-[11px] text-slate-300 mt-0.5">희귀 재화(보석)로 최강의 전설 무기와 방어구를 획득하세요!</p>
+              <div class="font-extrabold text-xs text-yellow-300 flex items-center gap-1">
+                <span>🏺 고대 신비의 유물 보감</span>
+                <span class="text-[10px] text-slate-400 font-normal">(보유 시 영구 패시브 적용)</span>
+              </div>
+              <div class="text-[10px] text-slate-300 mt-0.5">
+                보유 현황: <b id="txtRelicCountBadge" class="text-cyan-300 font-mono">0 / 8개</b> 활성화
+              </div>
+            </div>
+            <button id="btnUpgradeAllRelics" class="pixel-btn bg-purple-700 hover:bg-purple-600 text-white font-extrabold text-[10px] px-2 py-1 rounded whitespace-nowrap">
+              ⚡ 모든 유물 일괄 강화
+            </button>
+          </div>
+
+          <!-- Relics Grid List -->
+          <div id="relicsListContainer" class="flex flex-col gap-2">
+            <!-- Dynamically populated via JS -->
+          </div>
+
+        </div>
+
+        <!-- ===================================== -->
+        <!-- TAB: 뽑기 (GACHA / SUMMON with Sub-Tabs) -->
+        <!-- ===================================== -->
+        <div id="tab-gacha" class="tab-pane hidden flex flex-col gap-2.5">
+          
+          <!-- Gacha Sub-Tab Switcher: [ 🗡️ 장비 소환 ] vs [ 🏺 유물 소환 ] -->
+          <div class="grid grid-cols-2 gap-1.5 p-1 bg-[#100a20] rounded border border-[#2d1e47] text-xs font-bold shrink-0">
+            <button id="btnGachaSubGear" class="py-1.5 rounded transition-colors bg-[#3b2d66] text-yellow-300 border border-yellow-400 shadow-sm flex items-center justify-center gap-1">
+              <span>🗡️</span><span>장비 소환</span>
+            </button>
+            <button id="btnGachaSubRelic" class="py-1.5 rounded transition-colors text-slate-400 hover:text-cyan-300 flex items-center justify-center gap-1">
+              <span>🏺</span><span>유물 소환</span>
+            </button>
+          </div>
+
+          <!-- GACHA SUB-PANE 1: GEAR SUMMON -->
+          <div id="gachaSubPaneGear" class="flex flex-col gap-2.5">
+            <!-- Summon Level & Rate Progress Box -->
+            <div class="pixel-box p-3 bg-[#18132c] flex flex-col gap-2">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-yellow-400 flex items-center gap-1">
+                  ⭐ 장비 소환 레벨: <span id="txtGachaLevel" class="text-cyan-300 font-extrabold text-sm font-mono">Lv.1</span>
+                </span>
+                <button id="btnShowRates" class="text-[10px] text-cyan-400 underline hover:text-cyan-300">
+                  장비 확률표 보기
+                </button>
+              </div>
+
+              <!-- Gacha EXP Bar -->
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[10px] text-slate-300 font-mono">
+                  <span>다음 소환 레벨까지</span>
+                  <span id="txtGachaExp">0 / 50 회</span>
+                </div>
+                <div class="w-full h-2.5 bg-[#251d42] rounded-full overflow-hidden border border-[#43336d]">
+                  <div id="barGachaExp" class="h-full bg-gradient-to-r from-cyan-500 to-yellow-400 transition-all duration-200" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <p class="text-[10px] text-slate-400">
+                💡 뽑기를 진행할수록 소환 레벨이 상승하여 <span class="text-yellow-300 font-bold">영웅/전설/신화/초월</span> 장비 등장 확률이 대폭 증가합니다!
+              </p>
             </div>
 
-            <!-- Summon Trigger Buttons -->
-            <div class="grid grid-cols-3 gap-2 w-full pt-1">
-              <!-- 1 Pull -->
-              <button id="btnGacha1" class="pixel-btn bg-[#2a3a6b] hover:bg-[#394f91] p-2 rounded flex flex-col items-center gap-1">
-                <span class="font-extrabold text-xs text-white">1회 소환</span>
-                <span class="text-[10px] text-cyan-300 font-bold flex items-center gap-0.5">💎 100</span>
-              </button>
-              <!-- 10 Pulls -->
-              <button id="btnGacha10" class="pixel-btn bg-[#48286e] hover:bg-[#5f3591] p-2 rounded flex flex-col items-center gap-1 border-yellow-400">
-                <span class="font-extrabold text-xs text-yellow-300">10회 소환</span>
-                <span class="text-[10px] text-cyan-300 font-bold flex items-center gap-0.5">💎 900 (10% 할인)</span>
-              </button>
-              <!-- 30 Pulls -->
-              <button id="btnGacha30" class="pixel-btn bg-[#6d2745] hover:bg-[#8f335b] p-2 rounded flex flex-col items-center gap-1 border-rose-400">
-                <span class="font-extrabold text-xs text-rose-300">30회 대량 소환</span>
-                <span class="text-[10px] text-cyan-300 font-bold flex items-center gap-0.5">💎 2,500 (특가)</span>
-              </button>
+            <!-- Summon Banner Graphics & Buttons -->
+            <div class="pixel-box p-3 bg-gradient-to-b from-[#21183d] to-[#140e26] flex flex-col items-center gap-2.5 text-center border-yellow-500/30">
+              <div class="text-2xl sm:text-3xl animate-bounce">🗡️✨💎</div>
+              <div>
+                <h3 class="text-sm sm:text-base font-extrabold text-yellow-300">고대 보물 장비 소환</h3>
+                <p class="text-[11px] text-slate-300 mt-0.5">희귀 재화(보석)로 최강의 전설 무기와 방어구를 획득하세요!</p>
+              </div>
+
+              <!-- Summon Trigger Buttons -->
+              <div class="grid grid-cols-3 gap-2 w-full pt-1">
+                <button id="btnGacha1" class="pixel-btn bg-[#2a3a6b] hover:bg-[#394f91] p-2 rounded flex flex-col items-center gap-1">
+                  <span class="font-extrabold text-xs text-white">1회 소환</span>
+                  <span class="text-[10px] text-cyan-300 font-bold flex items-center gap-0.5">💎 100</span>
+                </button>
+                <button id="btnGacha10" class="pixel-btn bg-[#48286e] hover:bg-[#5f3591] p-2 rounded flex flex-col items-center gap-1 border-yellow-400">
+                  <span class="font-extrabold text-xs text-yellow-300">10회 소환</span>
+                  <span class="text-[10px] text-cyan-300 font-bold flex items-center gap-0.5">💎 900 (10% 할인)</span>
+                </button>
+                <button id="btnGacha30" class="pixel-btn bg-[#6d2745] hover:bg-[#8f335b] p-2 rounded flex flex-col items-center gap-1 border-rose-400">
+                  <span class="font-extrabold text-xs text-rose-300">30회 대량</span>
+                  <span class="text-[10px] text-cyan-300 font-bold flex items-center gap-0.5">💎 2,500</span>
+                </button>
+              </div>
             </div>
           </div>
 
-<!-- Rate info modal opens centered like equipment modal -->
+          <!-- GACHA SUB-PANE 2: RELIC SUMMON -->
+          <div id="gachaSubPaneRelic" class="hidden flex flex-col gap-2.5">
+            <!-- Relic Summon Level Box -->
+            <div class="pixel-box p-3 bg-[#18132c] flex flex-col gap-2">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-amber-400 flex items-center gap-1">
+                  🏺 유물 소환 레벨: <span id="txtRelicGachaLevel" class="text-amber-300 font-extrabold text-sm font-mono">Lv.1</span>
+                </span>
+                <button id="btnShowRelicRates" class="text-[10px] text-cyan-400 underline hover:text-cyan-300">
+                  유물 확률표 보기
+                </button>
+              </div>
+
+              <!-- Relic Gacha EXP Bar -->
+              <div class="flex flex-col gap-1">
+                <div class="flex justify-between text-[10px] text-slate-300 font-mono">
+                  <span>다음 소환 레벨까지</span>
+                  <span id="txtRelicGachaExp">0 / 40 회</span>
+                </div>
+                <div class="w-full h-2.5 bg-[#251d42] rounded-full overflow-hidden border border-[#43336d]">
+                  <div id="barRelicGachaExp" class="h-full bg-gradient-to-r from-amber-500 to-purple-400 transition-all duration-200" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <p class="text-[10px] text-slate-400">
+                💡 유물은 장착하지 않고 <span class="text-amber-300 font-bold">보유만 해도 영구적인 패시브 효과</span>가 발동됩니다!
+              </p>
+            </div>
+
+            <!-- Relic Summon Banner -->
+            <div class="pixel-box p-3 bg-gradient-to-b from-[#2d1b4d] to-[#140b26] flex flex-col items-center gap-2.5 text-center border-amber-500/40">
+              <div class="text-2xl sm:text-3xl animate-bounce">🏺✨💎</div>
+              <div>
+                <h3 class="text-sm sm:text-base font-extrabold text-amber-300">고대 신비의 유물 소환</h3>
+                <p class="text-[11px] text-slate-300 mt-0.5">피해량, 체력, 치명타, 골드/보석 획득량 등 영구 스텟을 획득하세요!</p>
+              </div>
+
+              <!-- Relic Trigger Buttons -->
+              <div class="grid grid-cols-3 gap-2 w-full pt-1">
+                <button id="btnRelicGacha1" class="pixel-btn bg-[#2a3a6b] hover:bg-[#394f91] p-2 rounded flex flex-col items-center gap-1">
+                  <span class="font-extrabold text-xs text-white">1회 소환</span>
+                  <span class="text-[10px] text-cyan-300 font-bold flex items-center gap-0.5">💎 100</span>
+                </button>
+                <button id="btnRelicGacha10" class="pixel-btn bg-[#48286e] hover:bg-[#5f3591] p-2 rounded flex flex-col items-center gap-1 border-amber-400">
+                  <span class="font-extrabold text-xs text-yellow-300">10회 소환</span>
+                  <span class="text-[10px] text-cyan-300 font-bold flex items-center gap-0.5">💎 900 (10% 할인)</span>
+                </button>
+                <button id="btnRelicGacha30" class="pixel-btn bg-[#6d2745] hover:bg-[#8f335b] p-2 rounded flex flex-col items-center gap-1 border-rose-400">
+                  <span class="font-extrabold text-xs text-rose-300">30회 대량</span>
+                  <span class="text-[10px] text-cyan-300 font-bold flex items-center gap-0.5">💎 2,500</span>
+                </button>
+              </div>
+            </div>
+          </div>
 
         </div>
 
@@ -1037,6 +1133,114 @@
       ring: ['구리 반지', '은빛 반지', '루비 링', '에메랄드 인장', '오리하르콘 링', '태초의 성환', '신들의 맹약'],
     };
 
+    // ============================================================
+    // 8 EPIC RELICS DATA (보유 시 영구 패시브 적용되는 고대 유물)
+    // ============================================================
+    const RELICS_DATA = [
+      {
+        key: 'relic_sword',
+        name: '전설의 성검 파편',
+        icon: '🗡️',
+        tier: 4, // 영웅
+        optionName: '피해량(공격력) 증가',
+        baseBuff: 15, // +15%
+        perLevel: 10, // +10%
+        getDesc: (lvl) => `공격력(피해량) +${15 + (lvl - 1) * 10}% 영구 증가`,
+        getNextDesc: (lvl) => `공격력 +${15 + lvl * 10}% (+10%)`,
+      },
+      {
+        key: 'relic_tree',
+        name: '불멸의 세계수 잎',
+        icon: '🌿',
+        tier: 3, // 희귀
+        optionName: '생명력(최대 체력) 증가',
+        baseBuff: 20, // +20%
+        perLevel: 15, // +15%
+        getDesc: (lvl) => `최대 체력(생명력) +${20 + (lvl - 1) * 15}% 영구 증가`,
+        getNextDesc: (lvl) => `최대 체력 +${20 + lvl * 15}% (+15%)`,
+      },
+      {
+        key: 'relic_dragon_eye',
+        name: '파멸의 붉은 용안',
+        icon: '👁️',
+        tier: 5, // 전설
+        optionName: '치명타 피해 증가',
+        baseBuff: 50, // +50%
+        perLevel: 30, // +30%
+        getDesc: (lvl) => `치명타 피해 +${50 + (lvl - 1) * 30}% 영구 증가`,
+        getNextDesc: (lvl) => `치명타 피해 +${50 + lvl * 30}% (+30%)`,
+      },
+      {
+        key: 'relic_midas_cup',
+        name: '미다스의 황금 잔',
+        icon: '🏆',
+        tier: 4, // 영웅
+        optionName: '골드 획득량 증가',
+        baseBuff: 30, // +30%
+        perLevel: 20, // +20%
+        getDesc: (lvl) => `몬스터 처치 시 골드 획득량 +${30 + (lvl - 1) * 20}% 영구 증가`,
+        getNextDesc: (lvl) => `골드 획득량 +${30 + lvl * 20}% (+20%)`,
+      },
+      {
+        key: 'relic_gem_compass',
+        name: '에테르 보석 나침반',
+        icon: '🧭',
+        tier: 5, // 전설
+        optionName: '보석 획득량 증가',
+        baseBuff: 30, // +30%
+        perLevel: 20, // +20%
+        getDesc: (lvl) => `보스 처치 시 보석 획득량 +${30 + (lvl - 1) * 20}% 영구 증가`,
+        getNextDesc: (lvl) => `보석 획득량 +${30 + lvl * 20}% (+20%)`,
+      },
+      {
+        key: 'relic_hermes_wing',
+        name: '신속의 헤르메스 날개',
+        icon: '🪽',
+        tier: 4, // 영웅
+        optionName: '공격 속도 증가',
+        baseBuff: 15, // +15%
+        perLevel: 10, // +10%
+        getDesc: (lvl) => `기본 공격 속도 +${15 + (lvl - 1) * 10}% 영구 증가`,
+        getNextDesc: (lvl) => `공격 속도 +${15 + lvl * 10}% (+10%)`,
+      },
+      {
+        key: 'relic_holy_grail',
+        name: '치유의 대천사 성배',
+        icon: '🍷',
+        tier: 3, // 희귀
+        optionName: '체력 회복력 증가',
+        baseBuff: 35, // +35%
+        perLevel: 25, // +25%
+        getDesc: (lvl) => `초당 체력 자연 회복력 +${35 + (lvl - 1) * 25}% 영구 증가`,
+        getNextDesc: (lvl) => `체력 회복력 +${35 + lvl * 25}% (+25%)`,
+      },
+      {
+        key: 'relic_chrono_clock',
+        name: '시공간의 모래시계',
+        icon: '⏳',
+        tier: 6, // 신화
+        optionName: '스킬 쿨타임 감소',
+        baseBuff: 10, // -10%
+        perLevel: 3,  // -3%
+        getDesc: (lvl) => `모든 스킬 쿨타임 -${Math.min(50, 10 + (lvl - 1) * 3)}% 영구 감소 (최대 50%)`,
+        getNextDesc: (lvl) => `스킬 쿨타임 -${Math.min(50, 10 + lvl * 3)}% (-3%)`,
+      },
+    ];
+
+    const RELIC_GACHA_EXP_TABLE = [40, 100, 200, 350, 600, 950, 1400, 2000, 2800, 4000];
+    const RELIC_RATES_BY_LEVEL = [
+      { tier3: 75.0, tier4: 22.0, tier5: 3.0, tier6: 0.0 },
+      { tier3: 65.0, tier4: 28.0, tier5: 6.5, tier6: 0.5 },
+      { tier3: 52.0, tier4: 34.0, tier5: 12.5, tier6: 1.5 },
+      { tier3: 42.0, tier4: 38.0, tier5: 17.5, tier6: 2.5 },
+      { tier3: 32.0, tier4: 40.0, tier5: 23.0, tier6: 5.0 },
+      { tier3: 24.0, tier4: 40.0, tier5: 28.0, tier6: 8.0 },
+      { tier3: 16.0, tier4: 38.0, tier5: 35.0, tier6: 11.0 },
+      { tier3: 10.0, tier4: 36.0, tier5: 40.0, tier6: 14.0 },
+      { tier3: 6.0,  tier4: 32.0, tier5: 44.0, tier6: 18.0 },
+      { tier3: 3.0,  tier4: 27.0, tier5: 48.0, tier6: 22.0 },
+    ];
+
     // Gacha Rates by Gacha Level (Summon Lv 1 ~ 10)
     const GACHA_RATES_BY_LEVEL = [
       // Lv 1:
@@ -1156,6 +1360,20 @@
       },
       inventory: [], // Array of gear objects: { id, type, tier, level, count }
 
+      // Relics State (Permanent owned passive buffs)
+      relics: {
+        relic_sword: { level: 0, count: 0 },
+        relic_tree: { level: 0, count: 0 },
+        relic_dragon_eye: { level: 0, count: 0 },
+        relic_midas_cup: { level: 0, count: 0 },
+        relic_gem_compass: { level: 0, count: 0 },
+        relic_hermes_wing: { level: 0, count: 0 },
+        relic_holy_grail: { level: 0, count: 0 },
+        relic_chrono_clock: { level: 0, count: 0 },
+      },
+      relicGachaLevel: 1,
+      relicGachaExp: 0,
+
       // Infinite & Cumulative Progressive Achievements State
       questProgress: {
         killsClaimed: 0,
@@ -1213,6 +1431,9 @@
           if (parsed.inventory) game.inventory = parsed.inventory;
           if (parsed.quests) game.quests = parsed.quests;
           if (parsed.questProgress) game.questProgress = { ...game.questProgress, ...parsed.questProgress };
+          if (parsed.relics) game.relics = { ...game.relics, ...parsed.relics };
+          if (parsed.relicGachaLevel) game.relicGachaLevel = parsed.relicGachaLevel;
+          if (parsed.relicGachaExp) game.relicGachaExp = parsed.relicGachaExp;
         }
       } catch (err) {
         console.warn('LocalStorage load failed:', err);
@@ -1366,6 +1587,35 @@
       }
 
       baseCritRate = Math.min(100.0, baseCritRate); // Max 100% full critical cap
+
+      // 3. Relic Owned Passive Bonuses (보유 시 영구 적용)
+      if (game.relics) {
+        // (1) 전설의 성검 파편: 공격력(피해량) 증가
+        if (game.relics.relic_sword && game.relics.relic_sword.level > 0) {
+          const lvl = game.relics.relic_sword.level;
+          baseAtk *= (1 + (0.15 + (lvl - 1) * 0.10));
+        }
+        // (2) 불멸의 세계수 잎: 최대 체력(생명력) 증가
+        if (game.relics.relic_tree && game.relics.relic_tree.level > 0) {
+          const lvl = game.relics.relic_tree.level;
+          baseMaxHp *= (1 + (0.20 + (lvl - 1) * 0.15));
+        }
+        // (3) 파멸의 붉은 용안: 치명타 피해 증가
+        if (game.relics.relic_dragon_eye && game.relics.relic_dragon_eye.level > 0) {
+          const lvl = game.relics.relic_dragon_eye.level;
+          baseCritDmg += (50 + (lvl - 1) * 30);
+        }
+        // (4) 신속의 헤르메스 날개: 공격 속도 증가
+        if (game.relics.relic_hermes_wing && game.relics.relic_hermes_wing.level > 0) {
+          const lvl = game.relics.relic_hermes_wing.level;
+          baseAtkSpeed *= (1 + (0.15 + (lvl - 1) * 0.10));
+        }
+        // (5) 치유의 대천사 성배: 체력 회복력 증가
+        if (game.relics.relic_holy_grail && game.relics.relic_holy_grail.level > 0) {
+          const lvl = game.relics.relic_holy_grail.level;
+          baseRegen *= (1 + (0.35 + (lvl - 1) * 0.25));
+        }
+      }
 
       // Combat Power
       const cp = Math.floor(
@@ -1842,7 +2092,12 @@
 
       const stats = getEffectiveStats();
       audio.playSkill();
-      sk.curCd = sk.cd;
+      let cdMult = 1.0;
+      if (game.relics && game.relics.relic_chrono_clock && game.relics.relic_chrono_clock.level > 0) {
+        const reduction = Math.min(0.50, 0.10 + (game.relics.relic_chrono_clock.level - 1) * 0.03); // -10% ~ -50%
+        cdMult = (1 - reduction);
+      }
+      sk.curCd = sk.cd * cdMult;
 
       if (skillKey === 'slashWave') {
         projectiles.push({
@@ -1958,8 +2213,22 @@
       if (idx !== -1) enemies.splice(idx, 1);
 
       audio.playCoin();
-      game.gold += m.goldReward;
-      if (m.gemReward > 0) game.gems += m.gemReward;
+      // Apply Relic Multipliers for Gold & Gems
+      let relicGoldMult = 1.0;
+      let relicGemMult = 1.0;
+      if (game.relics) {
+        if (game.relics.relic_midas_cup && game.relics.relic_midas_cup.level > 0) {
+          relicGoldMult += 0.30 + (game.relics.relic_midas_cup.level - 1) * 0.20;
+        }
+        if (game.relics.relic_gem_compass && game.relics.relic_gem_compass.level > 0) {
+          relicGemMult += 0.30 + (game.relics.relic_gem_compass.level - 1) * 0.20;
+        }
+      }
+      const finalGoldReward = Math.floor(m.goldReward * relicGoldMult);
+      const finalGemReward = m.gemReward > 0 ? Math.floor(m.gemReward * relicGemMult) : 0;
+
+      game.gold += finalGoldReward;
+      if (finalGemReward > 0) game.gems += finalGemReward;
       game.totalKills++;
 
       // Death explosion particles
@@ -2475,6 +2744,7 @@
       // 3. Render active tab view
       renderStatsTab();
       renderEquipTab();
+      renderRelicTab();
       renderGachaTab();
       updateSkillsUI();
       updateQuestsUI();
@@ -2770,7 +3040,14 @@
           `;
         } else {
           let html = '';
-          game.inventory.forEach(item => {
+          // Sort inventory: lowest tier at top, highest tier at the bottom! (tier ascending, level ascending)
+          const sortedInventory = [...game.inventory].sort((a, b) => {
+            if (a.tier !== b.tier) return a.tier - b.tier; // 1 (일반) -> 7 (초월)
+            if ((a.awake || 0) !== (b.awake || 0)) return (a.awake || 0) - (b.awake || 0);
+            return a.level - b.level;
+          });
+
+          sortedInventory.forEach(item => {
             const tier = TIERS[item.tier - 1];
             const name = GEAR_NAMES[item.type][item.tier - 1];
             const icon = EQUIP_TYPES[item.type].icon;
@@ -3114,13 +3391,163 @@
       }
     }
 
-    // GACHA / SUMMON LOGIC
+    // ============================================================
+    // RELIC TAB RENDERING & ENHANCEMENT LOGIC
+    // ============================================================
+    function renderRelicTab() {
+      const container = document.getElementById('relicsListContainer');
+      if (!container) return;
+
+      if (!game.relics) {
+        game.relics = {
+          relic_sword: { level: 0, count: 0 },
+          relic_tree: { level: 0, count: 0 },
+          relic_dragon_eye: { level: 0, count: 0 },
+          relic_midas_cup: { level: 0, count: 0 },
+          relic_gem_compass: { level: 0, count: 0 },
+          relic_hermes_wing: { level: 0, count: 0 },
+          relic_holy_grail: { level: 0, count: 0 },
+          relic_chrono_clock: { level: 0, count: 0 },
+        };
+      }
+
+      let ownedCount = 0;
+      let hasUpgradeable = false;
+      let html = '';
+
+      // Sort relics: lowest tier at top, highest tier at the bottom! (tier ascending)
+      const sortedRelics = [...RELICS_DATA].sort((a, b) => a.tier - b.tier);
+
+      sortedRelics.forEach(rel => {
+        const state = game.relics[rel.key] || { level: 0, count: 0 };
+        const tier = TIERS[rel.tier - 1];
+        const isOwned = state.level > 0;
+        if (isOwned) ownedCount++;
+
+        // Upgrade rule: 1강시 동일 유물 1개, 2강시 2개, 3강시 3개, N강시 N개 필요!
+        const reqPieces = Math.max(1, state.level);
+        const canUpgrade = isOwned && (state.count >= reqPieces);
+        if (canUpgrade) hasUpgradeable = true;
+
+        const currentEffectText = isOwned
+          ? `<span class="text-emerald-300 font-bold">${rel.getDesc(state.level)}</span>`
+          : `<span class="text-slate-500 font-normal">미보유 (유물 소환에서 획득 가능)</span>`;
+
+        const nextEffectText = isOwned
+          ? `<span class="text-[9px] text-slate-400">다음 ${state.level + 1}강: <span class="text-cyan-300 font-mono">${rel.getNextDesc(state.level)}</span></span>`
+          : `<span class="text-[9px] text-slate-500">최초 획득 시: ${rel.getDesc(1)}</span>`;
+
+        html += `
+          <div class="pixel-box p-2 bg-[#171329] flex items-center justify-between gap-2 border" style="border-color: ${isOwned ? tier.border : '#2a2245'};">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-2xl p-1 bg-[#100a20] rounded border border-[#2d1e47] shrink-0 ${isOwned ? '' : 'filter grayscale opacity-40'}">${rel.icon}</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-extrabold text-xs truncate" style="color: ${tier.color};">${rel.name}</span>
+                  <span class="text-[10px] font-mono px-1 rounded ${isOwned ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40' : 'bg-slate-800 text-slate-500'}">
+                    ${isOwned ? `${state.level}강` : '미보유'}
+                  </span>
+                  <span class="text-[9px] text-slate-400 font-mono">[${tier.name}]</span>
+                </div>
+                <div class="text-[10px] mt-0.5 truncate">${currentEffectText}</div>
+                <div class="mt-0.5 truncate">${nextEffectText}</div>
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-1 shrink-0">
+              ${isOwned ? `
+                <button class="pixel-btn px-2.5 py-1 rounded text-xs font-bold whitespace-nowrap ${canUpgrade ? 'bg-gradient-to-r from-purple-700 to-amber-600 hover:from-purple-600 hover:to-amber-500 text-white animate-pulse' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}"
+                  onclick="upgradeRelic('${rel.key}')" ${canUpgrade ? '' : 'disabled'}>
+                  <span>${canUpgrade ? '⚡ 강화하기' : '조각 부족'}</span>
+                  <span class="text-[9px] font-mono block ${canUpgrade ? 'text-yellow-300' : 'text-slate-500'}">(${state.count}/${reqPieces}개)</span>
+                </button>
+              ` : `
+                <span class="text-[10px] text-slate-500 px-2 py-1 bg-[#120a22] rounded border border-slate-700">미보유</span>
+              `}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      // Update badge and count text
+      const countEl = document.getElementById('txtRelicCountBadge');
+      if (countEl) countEl.textContent = `${ownedCount} / ${RELICS_DATA.length}개`;
+
+      const relicBadge = document.getElementById('relicBadge');
+      if (relicBadge) {
+        if (hasUpgradeable) relicBadge.classList.remove('hidden');
+        else relicBadge.classList.add('hidden');
+      }
+    }
+
+    window.upgradeRelic = function(relicKey) {
+      if (!game.relics) return;
+      const state = game.relics[relicKey];
+      const rel = RELICS_DATA.find(r => r.key === relicKey);
+      if (!state || !rel || state.level < 1) return;
+
+      const reqPieces = state.level;
+      if (state.count >= reqPieces) {
+        state.count -= reqPieces;
+        state.level++;
+        audio.playUpgrade();
+        screenShake = 8;
+        saveGame();
+        updateUI();
+        displayToast(`✨ [유물] ${rel.name} ${state.level}강 달성! (보유 효과 대폭 증가)`);
+      } else {
+        displayToast(`강화에 필요한 유물 조각이 부족합니다. (${state.count}/${reqPieces}개)`);
+      }
+    };
+
+    window.upgradeAllRelics = function() {
+      if (!game.relics) return;
+      let totalUpgrades = 0;
+
+      RELICS_DATA.forEach(rel => {
+        const state = game.relics[rel.key];
+        if (state && state.level >= 1) {
+          while (state.count >= state.level) {
+            state.count -= state.level;
+            state.level++;
+            totalUpgrades++;
+          }
+        }
+      });
+
+      if (totalUpgrades > 0) {
+        audio.playGachaFanfare();
+        screenShake = 12;
+        saveGame();
+        updateUI();
+        displayToast(`✨ 총 ${totalUpgrades}회의 유물 강화가 일괄 완료되었습니다!`);
+      } else {
+        displayToast('강화 가능한 유물 조각이 부족합니다.');
+      }
+    };
+
+    document.getElementById('btnUpgradeAllRelics').addEventListener('click', window.upgradeAllRelics);
+
+    // GACHA / SUMMON LOGIC (Supports Gear & Relic Sub-Panes)
     function renderGachaTab() {
+      // 1. Gear Gacha Level
       document.getElementById('txtGachaLevel').textContent = `Lv.${game.gachaLevel}`;
       const maxExp = GACHA_EXP_TABLE[game.gachaLevel - 1] || 9999;
       document.getElementById('txtGachaExp').textContent = `${game.gachaExp} / ${maxExp} 회`;
       const expPct = Math.min(100, (game.gachaExp / maxExp) * 100);
       document.getElementById('barGachaExp').style.width = `${expPct}%`;
+
+      // 2. Relic Gacha Level
+      const rLvl = game.relicGachaLevel || 1;
+      const rExp = game.relicGachaExp || 0;
+      const rMaxExp = RELIC_GACHA_EXP_TABLE[rLvl - 1] || 9999;
+      const rLvlEl = document.getElementById('txtRelicGachaLevel');
+      const rExpEl = document.getElementById('txtRelicGachaExp');
+      const rBarEl = document.getElementById('barRelicGachaExp');
+      if (rLvlEl) rLvlEl.textContent = `Lv.${rLvl}`;
+      if (rExpEl) rExpEl.textContent = `${rExp} / ${rMaxExp} 회`;
+      if (rBarEl) rBarEl.style.width = `${Math.min(100, (rExp / rMaxExp) * 100)}%`;
 
       // Rate info modal content
       const rateContent = document.getElementById('rateInfoContent');
@@ -3227,23 +3654,32 @@
       updateUI();
     }
 
-    function showGachaResultsModal(results, pulls, cost) {
+    function showGachaResultsModal(results, pulls, cost, isRelicGacha = false) {
       const modal = document.getElementById('gachaModal');
       const grid = document.getElementById('gachaResultGrid');
       grid.innerHTML = '';
 
       results.forEach(it => {
         const tier = TIERS[it.tier - 1];
-        const name = GEAR_NAMES[it.type][it.tier - 1];
-        const icon = EQUIP_TYPES[it.type].icon;
         const itemBox = document.createElement('div');
         itemBox.className = `pixel-box p-1 bg-[#19132e] flex flex-col items-center justify-center text-center border-2`;
         itemBox.style.borderColor = tier.border;
-        itemBox.innerHTML = `
-          <span class="text-base">${icon}</span>
-          <span class="text-[9px] font-bold truncate w-full" style="color: ${tier.color};">${tier.name}</span>
-          <span class="text-[8px] text-slate-300 truncate w-full">${name}</span>
-        `;
+
+        if (it.isRelic) {
+          itemBox.innerHTML = `
+            <span class="text-base">${it.icon}</span>
+            <span class="text-[9px] font-bold truncate w-full" style="color: ${tier.color};">${it.isNew ? '신규 획득!' : '+1 조각'}</span>
+            <span class="text-[8px] text-slate-300 truncate w-full">${it.name}</span>
+          `;
+        } else {
+          const name = GEAR_NAMES[it.type][it.tier - 1];
+          const icon = EQUIP_TYPES[it.type].icon;
+          itemBox.innerHTML = `
+            <span class="text-base">${icon}</span>
+            <span class="text-[9px] font-bold truncate w-full" style="color: ${tier.color};">${tier.name}</span>
+            <span class="text-[8px] text-slate-300 truncate w-full">${name}</span>
+          `;
+        }
         grid.appendChild(itemBox);
       });
 
@@ -3255,13 +3691,149 @@
 
       document.getElementById('btnGachaAgain').onclick = () => {
         modal.classList.add('hidden');
-        performGacha(pulls, cost);
+        if (isRelicGacha) {
+          performRelicGacha(pulls, cost);
+        } else {
+          performGacha(pulls, cost);
+        }
       };
     }
 
     document.getElementById('btnGacha1').addEventListener('click', () => performGacha(1, 100));
     document.getElementById('btnGacha10').addEventListener('click', () => performGacha(10, 900));
     document.getElementById('btnGacha30').addEventListener('click', () => performGacha(30, 2500));
+
+    // Gacha Sub-Tab Switcher Listeners
+    document.getElementById('btnGachaSubGear').addEventListener('click', () => {
+      document.getElementById('btnGachaSubGear').className = 'py-1.5 rounded transition-colors bg-[#3b2d66] text-yellow-300 border border-yellow-400 shadow-sm flex items-center justify-center gap-1';
+      document.getElementById('btnGachaSubRelic').className = 'py-1.5 rounded transition-colors text-slate-400 hover:text-cyan-300 flex items-center justify-center gap-1';
+      document.getElementById('gachaSubPaneGear').classList.remove('hidden');
+      document.getElementById('gachaSubPaneRelic').classList.add('hidden');
+    });
+
+    document.getElementById('btnGachaSubRelic').addEventListener('click', () => {
+      document.getElementById('btnGachaSubRelic').className = 'py-1.5 rounded transition-colors bg-[#3b2d66] text-yellow-300 border border-yellow-400 shadow-sm flex items-center justify-center gap-1';
+      document.getElementById('btnGachaSubGear').className = 'py-1.5 rounded transition-colors text-slate-400 hover:text-cyan-300 flex items-center justify-center gap-1';
+      document.getElementById('gachaSubPaneRelic').classList.remove('hidden');
+      document.getElementById('gachaSubPaneGear').classList.add('hidden');
+    });
+
+    // Relic Gacha Pull Function
+    function performRelicGacha(pulls, cost) {
+      if (game.gems < cost) {
+        displayToast('보석이 부족합니다! 업적 달성이나 스테이지를 클리어해 보석을 모으세요.');
+        return;
+      }
+
+      game.gems -= cost;
+      game.totalGachaPulls += pulls;
+      audio.playGachaFanfare();
+
+      const rLvl = game.relicGachaLevel || 1;
+      const rates = RELIC_RATES_BY_LEVEL[rLvl - 1] || RELIC_RATES_BY_LEVEL[0];
+      const results = [];
+
+      for (let i = 0; i < pulls; i++) {
+        const rand = Math.random() * 100;
+        let cumulative = 0;
+        let selectedTier = 3;
+
+        for (let t = 3; t <= 6; t++) {
+          cumulative += rates[`tier${t}`] || 0;
+          if (rand <= cumulative) {
+            selectedTier = t;
+            break;
+          }
+        }
+
+        // Filter relics by selectedTier
+        const matchingRelics = RELICS_DATA.filter(r => r.tier === selectedTier);
+        const pickedRelic = matchingRelics[Math.floor(Math.random() * matchingRelics.length)] || RELICS_DATA[0];
+
+        if (!game.relics) {
+          game.relics = {};
+        }
+        if (!game.relics[pickedRelic.key]) {
+          game.relics[pickedRelic.key] = { level: 0, count: 0 };
+        }
+
+        const state = game.relics[pickedRelic.key];
+        const isNew = (state.level === 0);
+
+        if (isNew) {
+          state.level = 1; // Unlocks immediately at 1강!
+          state.count = 0;
+        } else {
+          state.count = (state.count || 0) + 1; // Adds 1 duplicate piece!
+        }
+
+        results.push({
+          isRelic: true,
+          relic: pickedRelic,
+          isNew,
+          tier: pickedRelic.tier,
+          name: pickedRelic.name,
+          icon: pickedRelic.icon,
+        });
+
+        // Relic Gacha EXP
+        game.relicGachaExp = (game.relicGachaExp || 0) + 1;
+        const maxExp = RELIC_GACHA_EXP_TABLE[rLvl - 1] || 9999;
+        if (game.relicGachaExp >= maxExp && (game.relicGachaLevel || 1) < 10) {
+          game.relicGachaExp = 0;
+          game.relicGachaLevel = (game.relicGachaLevel || 1) + 1;
+          displayToast(`🎉 유물 소환 레벨 업! Lv.${game.relicGachaLevel} 달성 (전설/신화 유물 확률 증가)`);
+        } else if ((game.relicGachaLevel || 1) >= 10 && game.relicGachaExp > maxExp) {
+          game.relicGachaExp = maxExp;
+        }
+      }
+
+      showGachaResultsModal(results, pulls, cost, true);
+      saveGame();
+      updateUI();
+    }
+
+    document.getElementById('btnRelicGacha1').addEventListener('click', () => performRelicGacha(1, 100));
+    document.getElementById('btnRelicGacha10').addEventListener('click', () => performRelicGacha(10, 900));
+    document.getElementById('btnRelicGacha30').addEventListener('click', () => performRelicGacha(30, 2500));
+
+    // Relic Gacha Rates Modal
+    function openRelicRatesModal() {
+      audio.init();
+      const rLvl = game.relicGachaLevel || 1;
+      const rateContent = document.getElementById('rateInfoContent');
+      const rateLvlBadge = document.getElementById('rateModalLevelBadge');
+      const rateGemsBadge = document.getElementById('rateModalGemsBadge');
+      if (rateLvlBadge) rateLvlBadge.textContent = `유물 Lv.${rLvl}`;
+      if (rateGemsBadge) rateGemsBadge.textContent = formatNumber(game.gems);
+
+      if (rateContent) {
+        const rates = RELIC_RATES_BY_LEVEL[rLvl - 1] || RELIC_RATES_BY_LEVEL[0];
+        let rHtml = '<div class="text-[10px] text-yellow-300 font-bold mb-1">🏺 유물 소환 등급별 확률표</div>';
+        for (let t = 3; t <= 6; t++) {
+          const tierInfo = TIERS[t - 1];
+          const rateVal = rates[`tier${t}`] || 0;
+          rHtml += `
+            <div class="pixel-box p-1.5 px-2 bg-[#140e24] flex items-center justify-between border" style="border-color: ${tierInfo.border};">
+              <div class="flex items-center gap-1.5">
+                <span class="font-extrabold text-xs" style="color: ${tierInfo.color};">[${tierInfo.name} 유물]</span>
+                <span class="text-[10px] text-slate-400 font-mono">티어 ${t}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-16 h-1.5 bg-[#251b3d] rounded overflow-hidden hidden sm:block">
+                  <div class="h-full" style="width: ${Math.min(100, rateVal)}%; background-color: ${tierInfo.color};"></div>
+                </div>
+                <span class="font-mono font-bold text-xs" style="color: ${rateVal > 0 ? '#facc15' : '#64748b'};">${rateVal.toFixed(1)}%</span>
+              </div>
+            </div>
+          `;
+        }
+        rateContent.innerHTML = rHtml;
+      }
+      document.getElementById('rateInfoModal').classList.remove('hidden');
+    }
+
+    document.getElementById('btnShowRelicRates').addEventListener('click', openRelicRatesModal);
 
     // ============================================================
     // INFINITE & CUMULATIVE PROGRESSIVE ACHIEVEMENTS
